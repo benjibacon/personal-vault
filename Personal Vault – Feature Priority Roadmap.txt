@@ -1,0 +1,62 @@
+Personal Vault – Feature Priority Roadmap
+Phase 1 – Core Functionality (MVP)
+
+Goal: Get a functional, Obsidian-compatible vault capturing content quickly with AI categorization.
+
+Feature	Description
+Quick Add Anywhere	Single entry point for text, clipboard, voice, images, links, or files.
+AI Processing (Single Pass)	Categorize, tag, link, and deduplicate content automatically.
+Markdown/Obsidian Storage	Save entries as Markdown files with folders and headings.
+Webpage Capture (Text Only)	Capture text via Chrome extension, store metadata (URL, title, date).
+Image & OCR Support	Extract text from screenshots or photos; AI categorizes and links.
+Basic Tagging & Linking	AI suggests tags and links notes to related content.
+
+Outcome: Vault works end-to-end for adding and organizing content. Users can explore and view content in Obsidian.
+
+Phase 2 – Enhanced AI & Media Handling
+
+Goal: Improve organization, handle images and media more intelligently, and start adaptive learning.
+
+Feature	Description
+Webpage Image Capture (Optional)	Save images alongside text, optionally tag images separately.
+Smart Linking Improvements	AI finds deeper relationships between notes, images, and documents.
+Google Drive Integration	Import files from Drive; AI categorizes and links them.
+AI Adaptation / Learning	System adjusts categorization, tagging, and linking rules based on user behavior.
+Quick Tag Suggestions	AI suggests categories and tags as notes are added for more precision.
+
+Outcome: Vault adapts to user preferences; media handling and cross-linking become smarter.
+
+Phase 3 – Analytics & Summaries
+
+Goal: Provide insights, visualizations, and dynamic highlights.
+
+Feature	Description
+Daily / Weekly Analytics	Most active categories, trends, gaps in knowledge.
+Dynamic Summaries / Clip Shows	AI-generated “best of” collections, timelines, highlight reels.
+Visual Knowledge Graphs	Map relationships between notes, categories, and content.
+Optional Export	Summaries and highlights exportable to Markdown or PDF.
+
+Outcome: Users can see their progress, trends, and interesting connections at a glance.
+
+Phase 4 – Advanced Features / Optional Enhancements
+
+Goal: Make the vault highly interactive, intelligent, and adaptive.
+
+Feature	Description
+Voice Quick Add Anywhere	Add notes, links, or images entirely via voice.
+Smart Reminders / Suggested Exploration	AI suggests notes to review or related areas to explore.
+Cross-Category Insights	AI detects unexpected relationships (e.g., Coding ↔ Music) for creative insights.
+Continuous Background Adaptation	AI continuously refines categorization, linking, and tag suggestions in the background.
+Custom Visualizations	AI generates graphs, timelines, or “clip show” videos for specific categories.
+
+Outcome: Vault becomes a fully adaptive, living knowledge system that actively assists and inspires the user.
+
+Implementation Strategy
+
+Phase 1 first: ensure adding content, storing in Obsidian, and AI categorization works.
+
+Phase 2 next: improve AI intelligence, handle media, integrate cloud sources.
+
+Phase 3: analytics and summaries to make the system insightful.
+
+Phase 4: polish with advanced adaptive features and interactive enhancements.
