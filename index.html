@@ -843,18 +843,8 @@
                 const file = event.target.files[0];
                 if (!file) return;
 
-                // Process image with OCR
-                const imageData = await this.processImage(file);
-                
-                // Add extracted text to note content if any was found
-                if (imageData.ocrText) {
-                    const noteContent = document.getElementById('noteContent');
-                    const currentContent = noteContent.value;
-                    const extractedText = `[Image: ${file.name}]\nExtracted text: ${imageData.ocrText}`;
-                    noteContent.value = currentContent + (currentContent ? '\n\n' : '') + extractedText;
-                } else {
-                    this.showToast('No text detected in image', 'info');
-                }
+                // Just show that image was selected - don't prompt yet
+                this.showToast('Image selected - add description when saving', 'info');
             }
 
             deleteNote(id) {
