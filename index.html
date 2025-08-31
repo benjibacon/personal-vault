@@ -544,7 +544,7 @@
                 const note = this.notes.find(n => n.id === id);
                 if (!note) return;
 
-                this.currentNoteId = id; // Store current note ID for editing
+                this.currentNoteId = id;
                 
                 document.getElementById('viewTitle').textContent = note.title;
                 document.getElementById('viewContent').innerHTML = `
@@ -553,10 +553,31 @@
                     ${note.content}
                 `;
                 
+                // Find related notes
+                const relatedNotes = this.findRelatedNotes(note, this.notes);
+                
                 document.getElementById('viewMeta').innerHTML = `
                     <div>Category: <span class="category-badge ${note.category.toLowerCase()}">${note.category}</span></div>
                     <div style="margin-top: 8px;">Created: ${new Date(note.timestamp).toLocaleString()}</div>
                     ${note.tags.length > 0 ? `<div style="margin-top: 8px;">Tags: ${note.tags.join(', ')}</div>` : ''}
+                    ${relatedNotes.length > 0 ? `
+                        <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #eee;">
+                            <div style="font-weight: 600; margin-bottom: 8px;">Related Notes:</div>
+                            ${relatedNotes.map(relatedNote => `
+                                <div class="related-note" onclick="window.personalVault.viewNote(${relatedNote.id})" style="
+                                    padding: 8px; 
+                                    background: #f8f9fa; 
+                                    border-radius: 4px; 
+                                    margin-bottom: 4px; 
+                                    cursor: pointer;
+                                    font-size: 13px;
+                                " onmouseover="this.style.background='#e9ecef'" onmouseout="this.style.background='#f8f9fa'">
+                                    <span class="category-badge ${relatedNote.category.toLowerCase()}">${relatedNote.category}</span>
+                                    ${relatedNote.title}
+                                </div>
+                            `).join('')}
+                        </div>
+                    ` : ''}
                 `;
 
                 document.getElementById('viewModal').classList.add('show');
@@ -738,6 +759,47 @@
                     .slice(0, 5);
                     
                 return tags;
+            }
+
+            findRelatedNotes(currentNote, allNotes) {
+                const relatedNotes = [];
+                
+                allNotes.forEach(note => {
+                    if (note.id === currentNote.id) return; // Skip self
+                    
+                    let similarity = 0;
+                    
+                    // Category match (strong connection)
+                    if (note.category === currentNote.category) {
+                        similarity += 3;
+                    }
+                    
+                    // Tag overlap
+                    const commonTags = currentNote.tags.filter(tag => 
+                        note.tags.includes(tag)
+                    );
+                    similarity += commonTags.length * 2;
+                    
+                    // Title/content keyword overlap
+                    const currentWords = (currentNote.title + ' ' + currentNote.content).toLowerCase().split(/\W+/);
+                    const noteWords = (note.title + ' ' + note.content).toLowerCase().split(/\W+/);
+                    const commonWords = currentWords.filter(word => 
+                        noteWords.includes(word) && word.length > 4
+                    );
+                    similarity += commonWords.length;
+                    
+                    if (similarity > 2) {
+                        relatedNotes.push({
+                            note: note,
+                            similarity: similarity
+                        });
+                    }
+                });
+                
+                return relatedNotes
+                    .sort((a, b) => b.similarity - a.similarity)
+                    .slice(0, 3)
+                    .map(item => item.note);
             }
 
             async processImage(file) {
