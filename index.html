@@ -878,6 +878,7 @@
             searchNotes(query) {
                 if (!query) {
                     this.displayNotes(this.notes);
+                    this.clearSearchSuggestions();
                     return;
                 }
                 
@@ -889,6 +890,104 @@
                 );
                 
                 this.displayNotes(searchResults);
+                this.showSearchInsights(query, searchResults);
+            }
+
+            showSearchInsights(query, results) {
+                const container = document.getElementById('notesContainer');
+                
+                if (results.length === 0) {
+                    // Show search suggestions when no results found
+                    const suggestions = this.generateSearchSuggestions(query);
+                    const suggestionsHtml = suggestions.length > 0 ? `
+                        <div style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+                            <h4>Try searching for:</h4>
+                            <div style="margin-top: 10px;">
+                                ${suggestions.map(suggestion => `
+                                    <span onclick="document.getElementById('searchInput').value='${suggestion}'; window.personalVault.searchNotes('${suggestion}')" 
+                                          style="display: inline-block; padding: 4px 8px; background: white; border: 1px solid #ddd; border-radius: 4px; margin: 2px; cursor: pointer;">
+                                        ${suggestion}
+                                    </span>
+                                `).join('')}
+                            </div>
+                        </div>
+                    ` : '';
+                    
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">🔍</div>
+                            <h2>No results for "${query}"</h2>
+                            <p>Try different keywords or check your spelling</p>
+                            ${suggestionsHtml}
+                        </div>
+                    `;
+                } else {
+                    // Show search insights at the top
+                    const categories = [...new Set(results.map(note => note.category))];
+                    const topTags = this.getTopTags(results);
+                    
+                    const insightsHtml = `
+                        <div style="margin-bottom: 20px; padding: 15px; background: #e3f2fd; border-radius: 8px; font-size: 14px;">
+                            <strong>${results.length} results found</strong> • 
+                            Categories: ${categories.join(', ')} • 
+                            Related: ${topTags.slice(0, 3).join(', ')}
+                        </div>
+                    `;
+                    
+                    container.insertAdjacentHTML('afterbegin', insightsHtml);
+                }
+            }
+
+            generateSearchSuggestions(query) {
+                const allTags = [];
+                const allCategories = [];
+                const commonWords = [];
+                
+                this.notes.forEach(note => {
+                    allTags.push(...note.tags);
+                    allCategories.push(note.category);
+                    const words = (note.title + ' ' + note.content).toLowerCase().split(/\W+/)
+                        .filter(word => word.length > 3);
+                    commonWords.push(...words);
+                });
+                
+                // Find suggestions similar to the query
+                const queryLower = query.toLowerCase();
+                const suggestions = [];
+                
+                // Similar tags
+                [...new Set(allTags)].forEach(tag => {
+                    if (tag.toLowerCase().includes(queryLower) || queryLower.includes(tag.toLowerCase())) {
+                        suggestions.push(tag);
+                    }
+                });
+                
+                // Similar categories
+                [...new Set(allCategories)].forEach(category => {
+                    if (category.toLowerCase().includes(queryLower)) {
+                        suggestions.push(category);
+                    }
+                });
+                
+                return [...new Set(suggestions)].slice(0, 5);
+            }
+
+            getTopTags(notes) {
+                const tagFreq = {};
+                notes.forEach(note => {
+                    note.tags.forEach(tag => {
+                        tagFreq[tag] = (tagFreq[tag] || 0) + 1;
+                    });
+                });
+                
+                return Object.entries(tagFreq)
+                    .sort((a, b) => b[1] - a[1])
+                    .map(([tag]) => tag);
+            }
+
+            clearSearchSuggestions() {
+                const existingInsights = document.querySelector('.search-insights');
+                if (existingInsights) existingInsights.remove();
             }
 
             async toggleVoiceRecording() {
