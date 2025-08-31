@@ -828,39 +828,23 @@
                     return;
                 }
 
-                // Group notes by category
-                const categories = {};
+                // Create and download individual .md files
                 notes.forEach(note => {
-                    if (!categories[note.category]) {
-                        categories[note.category] = [];
-                    }
-                    
                     const filename = this.sanitizeFilename(note.title) + '.md';
                     const content = this.formatForObsidian(note);
                     
-                    categories[note.category].push({ filename, content });
+                    const blob = new Blob([content], { type: 'text/markdown' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
                 });
-
-                // Create export data
-                const exportData = {
-                    exportDate: new Date().toISOString(),
-                    totalNotes: notes.length,
-                    structure: categories
-                };
-
-                // Download as JSON
-                const exportJson = JSON.stringify(exportData, null, 2);
-                const blob = new Blob([exportJson], { type: 'application/json' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `PersonalVault_Export_${new Date().toISOString().split('T')[0]}.json`;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
                 
-                this.showToast(`Exported ${notes.length} notes`, 'success');
+                this.showToast(`Exported ${notes.length} .md files`, 'success');
             }
 
             sanitizeFilename(title) {
