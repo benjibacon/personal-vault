@@ -784,7 +784,7 @@
                 const blob = await response.blob();
                 
                 formData.append('file', blob, 'image.jpg');
-                formData.append('apikey', 'K89711949188957'); // Your OCR.space API key
+                formData.append('apikey', 'K89711949188957');
                 formData.append('language', 'eng');
                 formData.append('isOverlayRequired', 'false');
 
@@ -793,13 +793,17 @@
                     body: formData
                 });
 
+                if (!ocrResponse.ok) {
+                    throw new Error(`OCR API returned ${ocrResponse.status}`);
+                }
+
                 const result = await ocrResponse.json();
                 
                 if (result.ParsedResults && result.ParsedResults[0]) {
                     return result.ParsedResults[0].ParsedText;
                 }
                 
-                throw new Error('No text found');
+                throw new Error('No text found in OCR result');
             }
 
             filterNotes(category) {
