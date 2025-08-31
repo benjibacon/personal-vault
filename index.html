@@ -751,8 +751,21 @@
                             ocrText: null
                         };
                         
-                        // Manual text input for images
-                        const userText = prompt('Describe this image or type any text you see (for better categorization):');
+                        // Try OCR.space API first
+                        try {
+                            const ocrResult = await this.performOCR(e.target.result);
+                            if (ocrResult && ocrResult.trim()) {
+                                imageData.ocrText = ocrResult;
+                                this.showToast('Text extracted from image', 'success');
+                                resolve(imageData);
+                                return;
+                            }
+                        } catch (error) {
+                            console.log('OCR failed, falling back to manual input:', error);
+                        }
+                        
+                        // Fallback to manual input if OCR fails
+                        const userText = prompt('OCR failed. Please type any text you see in this image (or leave blank):');
                         if (userText && userText.trim()) {
                             imageData.ocrText = userText.trim();
                         }
@@ -761,6 +774,32 @@
                     };
                     reader.readAsDataURL(file);
                 });
+            }
+
+            async performOCR(dataUrl) {
+                const formData = new FormData();
+                
+                // Convert data URL to blob
+                const response = await fetch(dataUrl);
+                const blob = await response.blob();
+                
+                formData.append('file', blob, 'image.jpg');
+                formData.append('apikey', 'K82507966688957'); // Your OCR.space API key
+                formData.append('language', 'eng');
+                formData.append('isOverlayRequired', 'false');
+
+                const ocrResponse = await fetch('https://api.ocr.space/parse/image', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await ocrResponse.json();
+                
+                if (result.ParsedResults && result.ParsedResults[0]) {
+                    return result.ParsedResults[0].ParsedText;
+                }
+                
+                throw new Error('No text found');
             }
 
             filterNotes(category) {
