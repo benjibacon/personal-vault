@@ -1,72 +1,51 @@
 /**
  * Storage Manager Module - Personal Vault v2.0
- * Handles data persistence with migration path from localStorage to IndexedDB
- * Phase 1: localStorage implementation with IndexedDB preparation
+ * Handles all data persistence operations with schema validation
+ * Target: 250 lines max
  */
 
 class StorageManager {
     constructor() {
-        this.name = 'storage-manager';
         this.version = '1.0.0';
-        this.dependencies = ['event-bus'];
+        this.name = 'storage-manager';
+        this.dependencies = ['core'];
         
-        // Storage configuration
-        this.storageType = 'localStorage'; // Future: 'indexedDB'
-        this.storagePrefix = 'vault_';
-        
-        // Data schema version for migrations
-        this.schemaVersion = '1.0.0';
-        
-        // Core data keys
-        this.dataKeys = {
-            NOTES: 'notes',
-            AI_MEMORY: 'ai_memory',
-            USER_CONFIG: 'user_config',
-            SCHEMA_VERSION: 'schema_version'
+        // Storage keys
+        this.keys = {
+            notes: 'vault_notes_v2',
+            aiMemory: 'vault_ai_memory_v2',
+            userConfig: 'vault_user_config_v2',
+            schemas: 'vault_schemas_v2'
         };
-
+        
         // In-memory cache for performance
         this.cache = new Map();
-        this.cacheExpiry = new Map();
-        this.cacheTTL = 5 * 60 * 1000; // 5 minutes
-
-        this.eventBus = null;
-        this.isInitialized = false;
+        this.initialized = false;
     }
 
     /**
-     * Initialize storage manager
-     * @param {EventBus} eventBus - Event bus instance
-     * @param {Object} config - Configuration options
+     * Initialize the storage system
+     * @param {Object} core - Core vault instance
+     * @param {Object} config - Configuration object
+     * @returns {Promise<void>}
      */
-    async init(eventBus, config = {}) {
-        this.eventBus = eventBus;
-        
+    async init(core, config = {}) {
         try {
-            // Check storage availability
-            await this.checkStorageAvailability();
+            // Initialize default schemas
+            await this.initializeSchemas();
             
-            // Initialize data schema
-            await this.initializeSchema();
+            // Load or create default data structures
+            await this.initializeData();
             
-            // Setup event listeners
-            this.setupEventListeners();
+            // Set up cache
+            this.loadCache();
             
-            // Validate and migrate data if needed
-            await this.validateAndMigrate();
+            this.initialized = true;
+            console.log('Storage Manager initialized successfully');
             
-            this.isInitialized = true;
-            this.eventBus.emit('storage:initialized', { 
-                version: this.version,
-                storageType: this.storageType
-            });
-            
-            console.log('StorageManager initialized successfully');
             return Promise.resolve();
-            
         } catch (error) {
-            console.error('StorageManager initialization failed:', error);
-            this.eventBus.emit('storage:error', { error: error.message });
+            console.error('Storage Manager initialization failed:', error);
             throw error;
         }
     }
@@ -75,529 +54,569 @@ class StorageManager {
      * Clean up storage manager
      */
     destroy() {
-        if (this.eventBus) {
-            this.eventBus.off('storage:save', this.handleSaveEvent);
-            this.eventBus.off('storage:load', this.handleLoadEvent);
-        }
-        
         this.cache.clear();
-        this.cacheExpiry.clear();
-        this.isInitialized = false;
+        this.initialized = false;
     }
 
     /**
-     * Get public API for other modules
+     * Get public API methods
+     * @returns {Object} Public API
      */
     getAPI() {
         return {
+            // Core CRUD operations
             save: this.save.bind(this),
             load: this.load.bind(this),
             delete: this.delete.bind(this),
-            exists: this.exists.bind(this),
+            
+            // Note operations
+            saveNote: this.saveNote.bind(this),
+            loadNotes: this.loadNotes.bind(this),
+            updateNote: this.updateNote.bind(this),
+            deleteNote: this.deleteNote.bind(this),
+            
+            // AI Memory operations
             getAIMemory: this.getAIMemory.bind(this),
             updateAIMemory: this.updateAIMemory.bind(this),
+            
+            // User config operations
             getUserConfig: this.getUserConfig.bind(this),
             updateUserConfig: this.updateUserConfig.bind(this),
-            getAllNotes: this.getAllNotes.bind(this),
+            
+            // Utility operations
             exportData: this.exportData.bind(this),
             importData: this.importData.bind(this),
-            clearCache: this.clearCache.bind(this),
+            validateSchema: this.validateSchema.bind(this),
             getStorageStats: this.getStorageStats.bind(this)
         };
     }
 
     /**
-     * Setup event listeners
+     * Handle events from event bus
+     * @param {string} eventType - Type of event
+     * @param {Object} data - Event data
      */
-    setupEventListeners() {
-        this.eventBus.on('storage:save', this.handleSaveEvent.bind(this));
-        this.eventBus.on('storage:load', this.handleLoadEvent.bind(this));
-        this.eventBus.on('storage:clear-cache', () => this.clearCache());
-    }
-
-    /**
-     * Handle save events from other modules
-     */
-    async handleSaveEvent(data) {
-        const { key, value, options } = data;
-        try {
-            await this.save(key, value, options);
-            this.eventBus.emit('storage:saved', { key, success: true });
-        } catch (error) {
-            this.eventBus.emit('storage:error', { key, error: error.message });
+    handleEvent(eventType, data) {
+        switch (eventType) {
+            case 'storage:save':
+                return this.save(data.key, data.value);
+            case 'storage:load':
+                return this.load(data.key);
+            case 'storage:clear-cache':
+                this.cache.clear();
+                break;
+            default:
+                // Ignore unknown events
+                break;
         }
     }
 
     /**
-     * Handle load events from other modules
+     * Initialize default data schemas
      */
-    async handleLoadEvent(data) {
-        const { key, callback } = data;
-        try {
-            const value = await this.load(key);
-            if (callback) callback(null, value);
-            this.eventBus.emit('storage:loaded', { key, value });
-        } catch (error) {
-            if (callback) callback(error);
-            this.eventBus.emit('storage:error', { key, error: error.message });
-        }
+    async initializeSchemas() {
+        const defaultSchemas = {
+            note: {
+                id: 'string',
+                title: 'string',
+                content: 'string',
+                isUserCreated: 'boolean',
+                category: 'string',
+                tags: 'array',
+                rating: 'number',
+                ratingReason: 'string',
+                timestamp: 'string',
+                lastModified: 'string',
+                sourceUrl: 'string?',
+                contentType: 'string',
+                metadata: 'object',
+                connections: 'array',
+                aiInsights: 'object'
+            },
+            aiMemory: {
+                userVoice: {
+                    languagePatterns: 'object',
+                    emotionalBaseline: 'object',
+                    writingStyle: 'object'
+                },
+                contentAnalysis: {
+                    categoryPatterns: 'object',
+                    interestEvolution: 'object',
+                    topicCorrelations: 'object'
+                },
+                crossInsights: {
+                    personalityVsInterests: 'object',
+                    behaviorPatterns: 'object',
+                    connectionDiscoveries: 'array'
+                }
+            },
+            userConfig: {
+                preferences: 'object',
+                customCategories: 'array',
+                templates: 'array',
+                automationRules: 'array'
+            }
+        };
+
+        await this.save(this.keys.schemas, defaultSchemas);
     }
 
     /**
-     * Check if storage is available
+     * Initialize default data structures
      */
-    async checkStorageAvailability() {
-        try {
-            const testKey = this.storagePrefix + 'test';
-            localStorage.setItem(testKey, 'test');
-            localStorage.removeItem(testKey);
-            return true;
-        } catch (error) {
-            throw new Error('localStorage not available: ' + error.message);
-        }
-    }
-
-    /**
-     * Initialize data schema
-     */
-    async initializeSchema() {
-        const version = await this.load(this.dataKeys.SCHEMA_VERSION);
-        
-        if (!version) {
-            // First time initialization
-            await this.save(this.dataKeys.SCHEMA_VERSION, this.schemaVersion);
-            await this.initializeDefaultData();
-        }
-    }
-
-    /**
-     * Initialize default data structure
-     */
-    async initializeDefaultData() {
-        // Initialize notes array
-        const existingNotes = await this.load(this.dataKeys.NOTES);
+    async initializeData() {
+        // Initialize notes if not exists
+        const existingNotes = await this.load(this.keys.notes);
         if (!existingNotes) {
-            await this.save(this.dataKeys.NOTES, []);
+            await this.save(this.keys.notes, []);
         }
 
-        // Initialize AI memory structure
-        const existingAI = await this.load(this.dataKeys.AI_MEMORY);
+        // Initialize AI memory if not exists
+        const existingAI = await this.load(this.keys.aiMemory);
         if (!existingAI) {
-            const defaultAIMemory = {
+            const defaultAI = {
                 userVoice: {
                     languagePatterns: {},
                     emotionalBaseline: {},
-                    writingStyle: {},
-                    lastAnalyzed: null
+                    writingStyle: {}
                 },
                 contentAnalysis: {
                     categoryPatterns: {},
                     interestEvolution: {},
-                    topicCorrelations: {},
-                    lastAnalyzed: null
+                    topicCorrelations: {}
                 },
                 crossInsights: {
                     personalityVsInterests: {},
                     behaviorPatterns: {},
-                    connectionDiscoveries: [],
-                    lastGenerated: null
+                    connectionDiscoveries: []
                 }
             };
-            await this.save(this.dataKeys.AI_MEMORY, defaultAIMemory);
+            await this.save(this.keys.aiMemory, defaultAI);
         }
 
-        // Initialize user configuration
-        const existingConfig = await this.load(this.dataKeys.USER_CONFIG);
+        // Initialize user config if not exists
+        const existingConfig = await this.load(this.keys.userConfig);
         if (!existingConfig) {
             const defaultConfig = {
                 preferences: {
                     theme: 'auto',
-                    defaultCategory: '',
-                    autoSave: true,
-                    notifications: true
+                    defaultCategory: 'Misc',
+                    autoConnect: true,
+                    aiLearning: true
                 },
                 customCategories: [],
                 templates: [],
-                automationRules: [],
-                version: this.schemaVersion
+                automationRules: []
             };
-            await this.save(this.dataKeys.USER_CONFIG, defaultConfig);
+            await this.save(this.keys.userConfig, defaultConfig);
         }
     }
 
     /**
-     * Validate and migrate data if needed
+     * Load frequently accessed data into cache
      */
-    async validateAndMigrate() {
-        const currentVersion = await this.load(this.dataKeys.SCHEMA_VERSION);
-        
-        if (currentVersion !== this.schemaVersion) {
-            console.log(`Migration needed: ${currentVersion} -> ${this.schemaVersion}`);
-            await this.migrateData(currentVersion, this.schemaVersion);
+    loadCache() {
+        // Cache schemas for validation
+        const schemas = this.loadSync(this.keys.schemas);
+        if (schemas) {
+            this.cache.set('schemas', schemas);
         }
     }
 
     /**
-     * Migrate data between schema versions
-     */
-    async migrateData(fromVersion, toVersion) {
-        // Future implementation for data migrations
-        console.log(`Data migration from ${fromVersion} to ${toVersion} completed`);
-        await this.save(this.dataKeys.SCHEMA_VERSION, toVersion);
-    }
-
-    /**
-     * Save data to storage with caching
+     * Generic save operation with validation
      * @param {string} key - Storage key
      * @param {*} data - Data to save
-     * @param {Object} options - Save options
+     * @returns {Promise<boolean>} Success status
      */
-    async save(key, data, options = {}) {
+    async save(key, data) {
         try {
-            const fullKey = this.storagePrefix + key;
-            const serializedData = JSON.stringify({
-                data,
-                timestamp: Date.now(),
-                version: this.schemaVersion
-            });
+            // Validate data if schema exists
+            if (this.shouldValidate(key)) {
+                const isValid = this.validateSchema(data, key);
+                if (!isValid) {
+                    throw new Error(`Invalid data schema for key: ${key}`);
+                }
+            }
 
             // Save to localStorage
-            localStorage.setItem(fullKey, serializedData);
-
-            // Update cache
-            this.updateCache(key, data);
-
-            // Emit save event
-            this.eventBus?.emit('storage:data-saved', { 
-                key, 
-                size: serializedData.length,
-                timestamp: Date.now()
-            });
+            const serializedData = JSON.stringify(data);
+            localStorage.setItem(key, serializedData);
+            
+            // Update cache for frequently accessed data
+            if (this.shouldCache(key)) {
+                this.cache.set(key, data);
+            }
 
             return true;
-
         } catch (error) {
-            console.error(`Storage save error for key ${key}:`, error);
-            throw new Error(`Failed to save data: ${error.message}`);
+            console.error(`Save failed for key ${key}:`, error);
+            return false;
         }
     }
 
     /**
-     * Load data from storage with caching
+     * Generic load operation
      * @param {string} key - Storage key
-     * @param {*} defaultValue - Default value if not found
+     * @returns {Promise<*>} Loaded data or null
      */
-    async load(key, defaultValue = null) {
+    async load(key) {
         try {
             // Check cache first
-            const cachedData = this.getFromCache(key);
-            if (cachedData !== null) {
-                return cachedData;
+            if (this.cache.has(key)) {
+                return this.cache.get(key);
             }
 
-            const fullKey = this.storagePrefix + key;
-            const serializedData = localStorage.getItem(fullKey);
-
-            if (serializedData === null) {
-                return defaultValue;
+            // Load from localStorage
+            const serializedData = localStorage.getItem(key);
+            if (!serializedData) {
+                return null;
             }
 
-            const parsed = JSON.parse(serializedData);
-            const data = parsed.data !== undefined ? parsed.data : parsed; // Handle legacy format
-
-            // Update cache
-            this.updateCache(key, data);
+            const data = JSON.parse(serializedData);
+            
+            // Cache frequently accessed data
+            if (this.shouldCache(key)) {
+                this.cache.set(key, data);
+            }
 
             return data;
-
         } catch (error) {
-            console.error(`Storage load error for key ${key}:`, error);
-            return defaultValue;
+            console.error(`Load failed for key ${key}:`, error);
+            return null;
         }
     }
 
     /**
-     * Delete data from storage
+     * Synchronous load for critical operations
      * @param {string} key - Storage key
+     * @returns {*} Loaded data or null
+     */
+    loadSync(key) {
+        try {
+            const serializedData = localStorage.getItem(key);
+            return serializedData ? JSON.parse(serializedData) : null;
+        } catch (error) {
+            console.error(`Sync load failed for key ${key}:`, error);
+            return null;
+        }
+    }
+
+    /**
+     * Generic delete operation
+     * @param {string} key - Storage key
+     * @returns {Promise<boolean>} Success status
      */
     async delete(key) {
         try {
-            const fullKey = this.storagePrefix + key;
-            localStorage.removeItem(fullKey);
-            
-            // Remove from cache
+            localStorage.removeItem(key);
             this.cache.delete(key);
-            this.cacheExpiry.delete(key);
-
-            this.eventBus?.emit('storage:data-deleted', { key });
             return true;
-
         } catch (error) {
-            console.error(`Storage delete error for key ${key}:`, error);
-            throw new Error(`Failed to delete data: ${error.message}`);
+            console.error(`Delete failed for key ${key}:`, error);
+            return false;
         }
     }
 
     /**
-     * Check if key exists in storage
-     * @param {string} key - Storage key
+     * Save a note with automatic ID generation
+     * @param {Object} noteData - Note data
+     * @returns {Promise<Object>} Saved note with ID
      */
-    async exists(key) {
-        const fullKey = this.storagePrefix + key;
-        return localStorage.getItem(fullKey) !== null;
-    }
+    async saveNote(noteData) {
+        try {
+            const notes = await this.loadNotes();
+            
+            // Generate ID if not provided
+            if (!noteData.id) {
+                noteData.id = Date.now().toString();
+            }
 
-    /**
-     * Cache management methods
-     */
-    updateCache(key, data) {
-        this.cache.set(key, data);
-        this.cacheExpiry.set(key, Date.now() + this.cacheTTL);
-    }
+            // Set timestamps
+            const now = new Date().toISOString();
+            if (!noteData.timestamp) {
+                noteData.timestamp = now;
+            }
+            noteData.lastModified = now;
 
-    getFromCache(key) {
-        const expiry = this.cacheExpiry.get(key);
-        if (expiry && Date.now() > expiry) {
-            this.cache.delete(key);
-            this.cacheExpiry.delete(key);
-            return null;
+            // Add default values
+            const note = {
+                title: '',
+                content: '',
+                isUserCreated: false,
+                category: 'Misc',
+                tags: [],
+                rating: 0,
+                ratingReason: '',
+                sourceUrl: '',
+                contentType: 'text',
+                metadata: {},
+                connections: [],
+                aiInsights: {},
+                ...noteData
+            };
+
+            // Add or update note
+            const existingIndex = notes.findIndex(n => n.id === note.id);
+            if (existingIndex >= 0) {
+                notes[existingIndex] = note;
+            } else {
+                notes.push(note);
+            }
+
+            // Save updated notes array
+            await this.save(this.keys.notes, notes);
+            
+            return note;
+        } catch (error) {
+            console.error('Save note failed:', error);
+            throw error;
         }
-        return this.cache.get(key) || null;
-    }
-
-    clearCache() {
-        this.cache.clear();
-        this.cacheExpiry.clear();
-        console.log('Storage cache cleared');
     }
 
     /**
-     * Specialized data access methods
+     * Load all notes
+     * @returns {Promise<Array>} Array of notes
      */
+    async loadNotes() {
+        const notes = await this.load(this.keys.notes);
+        return notes || [];
+    }
 
     /**
-     * Get AI memory with structure validation
+     * Update a specific note
+     * @param {string} noteId - Note ID
+     * @param {Object} updates - Fields to update
+     * @returns {Promise<Object>} Updated note
+     */
+    async updateNote(noteId, updates) {
+        try {
+            const notes = await this.loadNotes();
+            const noteIndex = notes.findIndex(n => n.id === noteId);
+            
+            if (noteIndex === -1) {
+                throw new Error(`Note not found: ${noteId}`);
+            }
+
+            // Update note
+            notes[noteIndex] = {
+                ...notes[noteIndex],
+                ...updates,
+                lastModified: new Date().toISOString()
+            };
+
+            await this.save(this.keys.notes, notes);
+            return notes[noteIndex];
+        } catch (error) {
+            console.error('Update note failed:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Delete a specific note
+     * @param {string} noteId - Note ID
+     * @returns {Promise<boolean>} Success status
+     */
+    async deleteNote(noteId) {
+        try {
+            const notes = await this.loadNotes();
+            const filteredNotes = notes.filter(n => n.id !== noteId);
+            
+            if (filteredNotes.length === notes.length) {
+                return false; // Note not found
+            }
+
+            await this.save(this.keys.notes, filteredNotes);
+            return true;
+        } catch (error) {
+            console.error('Delete note failed:', error);
+            return false;
+        }
+    }
+
+    /**
+     * Get AI memory data
+     * @returns {Promise<Object>} AI memory object
      */
     async getAIMemory() {
-        const aiMemory = await this.load(this.dataKeys.AI_MEMORY);
-        
-        // Ensure structure exists
-        if (!aiMemory || typeof aiMemory !== 'object') {
-            await this.initializeDefaultData();
-            return await this.load(this.dataKeys.AI_MEMORY);
-        }
-        
-        return aiMemory;
+        return await this.load(this.keys.aiMemory);
     }
 
     /**
-     * Update specific section of AI memory
-     * @param {string} section - 'userVoice', 'contentAnalysis', or 'crossInsights'
-     * @param {Object} data - Data to merge into section
+     * Update AI memory section
+     * @param {string} section - Section to update (userVoice, contentAnalysis, crossInsights)
+     * @param {Object} data - Data to merge
+     * @returns {Promise<boolean>} Success status
      */
     async updateAIMemory(section, data) {
-        const aiMemory = await this.getAIMemory();
-        
-        if (!aiMemory[section]) {
-            aiMemory[section] = {};
+        try {
+            const aiMemory = await this.getAIMemory();
+            
+            if (!aiMemory[section]) {
+                aiMemory[section] = {};
+            }
+
+            // Deep merge the data
+            aiMemory[section] = { ...aiMemory[section], ...data };
+            
+            return await this.save(this.keys.aiMemory, aiMemory);
+        } catch (error) {
+            console.error('Update AI memory failed:', error);
+            return false;
         }
-        
-        // Deep merge the data
-        aiMemory[section] = { ...aiMemory[section], ...data };
-        aiMemory[section].lastUpdated = new Date().toISOString();
-        
-        await this.save(this.dataKeys.AI_MEMORY, aiMemory);
-        
-        this.eventBus?.emit('ai-memory:updated', { section, data });
-        return aiMemory[section];
     }
 
     /**
      * Get user configuration
+     * @returns {Promise<Object>} User config object
      */
     async getUserConfig() {
-        return await this.load(this.dataKeys.USER_CONFIG);
+        return await this.load(this.keys.userConfig);
     }
 
     /**
      * Update user configuration
-     * @param {Object} updates - Configuration updates to merge
+     * @param {Object} updates - Config updates to merge
+     * @returns {Promise<boolean>} Success status
      */
     async updateUserConfig(updates) {
-        const config = await this.getUserConfig();
-        const updatedConfig = { ...config, ...updates };
-        updatedConfig.lastModified = new Date().toISOString();
-        
-        await this.save(this.dataKeys.USER_CONFIG, updatedConfig);
-        
-        this.eventBus?.emit('user-config:updated', updates);
-        return updatedConfig;
-    }
-
-    /**
-     * Get all notes with optional filtering
-     * @param {Object} filter - Optional filter criteria
-     */
-    async getAllNotes(filter = {}) {
-        const notes = await this.load(this.dataKeys.NOTES, []);
-        
-        if (Object.keys(filter).length === 0) {
-            return notes;
+        try {
+            const config = await this.getUserConfig();
+            const updatedConfig = { ...config, ...updates };
+            return await this.save(this.keys.userConfig, updatedConfig);
+        } catch (error) {
+            console.error('Update user config failed:', error);
+            return false;
         }
-        
-        // Apply filters
-        return notes.filter(note => {
-            for (const [key, value] of Object.entries(filter)) {
-                if (note[key] !== value) {
-                    return false;
-                }
-            }
-            return true;
-        });
     }
 
     /**
-     * Export all data for backup/portability
+     * Export all data for backup/migration
+     * @returns {Promise<Object>} Complete data export
      */
     async exportData() {
         try {
-            const exportData = {
-                version: this.schemaVersion,
-                timestamp: new Date().toISOString(),
-                notes: await this.load(this.dataKeys.NOTES, []),
-                aiMemory: await this.load(this.dataKeys.AI_MEMORY, {}),
-                userConfig: await this.load(this.dataKeys.USER_CONFIG, {})
+            const data = {
+                version: this.version,
+                exportDate: new Date().toISOString(),
+                notes: await this.loadNotes(),
+                aiMemory: await this.getAIMemory(),
+                userConfig: await this.getUserConfig()
             };
-
-            return JSON.stringify(exportData, null, 2);
-
+            
+            return data;
         } catch (error) {
-            console.error('Export error:', error);
-            throw new Error(`Failed to export data: ${error.message}`);
+            console.error('Export data failed:', error);
+            throw error;
         }
     }
 
     /**
      * Import data from backup
-     * @param {string} jsonData - Exported JSON data
-     * @param {Object} options - Import options
+     * @param {Object} importData - Data to import
+     * @returns {Promise<boolean>} Success status
      */
-    async importData(jsonData, options = { overwrite: false }) {
+    async importData(importData) {
         try {
-            const importData = JSON.parse(jsonData);
-            
             // Validate import data structure
-            if (!importData.version || !importData.notes) {
+            if (!importData.notes || !importData.aiMemory || !importData.userConfig) {
                 throw new Error('Invalid import data structure');
             }
 
-            // Handle version compatibility
-            if (importData.version !== this.schemaVersion) {
-                console.warn(`Version mismatch: ${importData.version} vs ${this.schemaVersion}`);
-            }
+            // Save imported data
+            await this.save(this.keys.notes, importData.notes);
+            await this.save(this.keys.aiMemory, importData.aiMemory);
+            await this.save(this.keys.userConfig, importData.userConfig);
 
-            if (options.overwrite) {
-                // Replace all data
-                await this.save(this.dataKeys.NOTES, importData.notes);
-                if (importData.aiMemory) {
-                    await this.save(this.dataKeys.AI_MEMORY, importData.aiMemory);
-                }
-                if (importData.userConfig) {
-                    await this.save(this.dataKeys.USER_CONFIG, importData.userConfig);
-                }
-            } else {
-                // Merge data (notes get new IDs to avoid conflicts)
-                const existingNotes = await this.load(this.dataKeys.NOTES, []);
-                const importedNotes = importData.notes.map(note => ({
-                    ...note,
-                    id: Date.now() + Math.random(), // Generate new ID
-                    imported: true,
-                    importTimestamp: new Date().toISOString()
-                }));
-                
-                await this.save(this.dataKeys.NOTES, [...existingNotes, ...importedNotes]);
-            }
+            // Clear cache to force reload
+            this.cache.clear();
+            this.loadCache();
 
-            this.clearCache(); // Clear cache after import
-            
-            this.eventBus?.emit('storage:data-imported', { 
-                notesCount: importData.notes.length,
-                overwrite: options.overwrite
-            });
-
-            return {
-                success: true,
-                notesImported: importData.notes.length
-            };
-
+            return true;
         } catch (error) {
-            console.error('Import error:', error);
-            throw new Error(`Failed to import data: ${error.message}`);
+            console.error('Import data failed:', error);
+            return false;
+        }
+    }
+
+    /**
+     * Validate data against schema
+     * @param {*} data - Data to validate
+     * @param {string} key - Storage key for schema lookup
+     * @returns {boolean} Is valid
+     */
+    validateSchema(data, key) {
+        try {
+            const schemas = this.cache.get('schemas');
+            if (!schemas) return true; // Skip validation if no schemas
+
+            // Simplified validation - in production would use more robust schema validator
+            // For now, just check basic structure
+            return typeof data === 'object' && data !== null;
+        } catch (error) {
+            console.error('Schema validation failed:', error);
+            return false;
         }
     }
 
     /**
      * Get storage statistics
+     * @returns {Promise<Object>} Storage stats
      */
     async getStorageStats() {
         try {
-            const notes = await this.load(this.dataKeys.NOTES, []);
-            const aiMemory = await this.load(this.dataKeys.AI_MEMORY, {});
-            const userConfig = await this.load(this.dataKeys.USER_CONFIG, {});
-
-            // Calculate storage usage
+            const notes = await this.loadNotes();
+            const aiMemory = await this.getAIMemory();
+            
+            // Calculate storage usage (approximate)
             const notesSize = JSON.stringify(notes).length;
-            const aiMemorySize = JSON.stringify(aiMemory).length;
-            const configSize = JSON.stringify(userConfig).length;
-            const totalSize = notesSize + aiMemorySize + configSize;
-
-            // Category distribution
-            const categoryStats = {};
-            notes.forEach(note => {
-                categoryStats[note.category] = (categoryStats[note.category] || 0) + 1;
-            });
-
+            const aiSize = JSON.stringify(aiMemory).length;
+            const totalSize = notesSize + aiSize;
+            
             return {
                 totalNotes: notes.length,
-                storageSize: {
-                    total: totalSize,
-                    notes: notesSize,
-                    aiMemory: aiMemorySize,
-                    config: configSize
-                },
-                categoryDistribution: categoryStats,
-                cacheStats: {
-                    entries: this.cache.size,
-                    hitRate: this.calculateCacheHitRate()
-                },
-                oldestNote: notes.length > 0 ? 
-                    new Date(Math.min(...notes.map(n => new Date(n.timestamp)))).toISOString() : null,
-                newestNote: notes.length > 0 ? 
-                    new Date(Math.max(...notes.map(n => new Date(n.timestamp)))).toISOString() : null
+                categoryCounts: this.getCategoryCounts(notes),
+                storageSize: totalSize,
+                cacheSize: this.cache.size,
+                lastUpdated: new Date().toISOString()
             };
-
         } catch (error) {
-            console.error('Stats calculation error:', error);
-            return {
-                error: error.message,
-                totalNotes: 0,
-                storageSize: { total: 0 }
-            };
+            console.error('Get storage stats failed:', error);
+            return {};
         }
     }
 
     /**
-     * Calculate cache hit rate (simplified implementation)
+     * Helper: Get category counts from notes
+     * @param {Array} notes - Notes array
+     * @returns {Object} Category counts
      */
-    calculateCacheHitRate() {
-        // This would require tracking hits/misses in a real implementation
-        return Math.round((this.cache.size / (this.cache.size + 1)) * 100);
+    getCategoryCounts(notes) {
+        return notes.reduce((counts, note) => {
+            counts[note.category] = (counts[note.category] || 0) + 1;
+            return counts;
+        }, {});
+    }
+
+    /**
+     * Helper: Should validate this key
+     * @param {string} key - Storage key
+     * @returns {boolean} Should validate
+     */
+    shouldValidate(key) {
+        return key === this.keys.notes; // Only validate notes for now
+    }
+
+    /**
+     * Helper: Should cache this key
+     * @param {string} key - Storage key
+     * @returns {boolean} Should cache
+     */
+    shouldCache(key) {
+        return [this.keys.schemas, this.keys.userConfig].includes(key);
     }
 }
 
-// Export the module
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = StorageManager;
-} else {
-    window.StorageManager = StorageManager;
-}
+// Export as module
+export default StorageManager;
