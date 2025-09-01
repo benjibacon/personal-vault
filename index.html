@@ -475,6 +475,7 @@
     <!-- Toast Notification -->
     <div id="toast" class="toast"></div>
 
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.1.1/dist/tesseract.min.js"></script>
     <script>
         class PersonalVault {
             constructor() {
@@ -813,21 +814,35 @@
                             ocrText: null
                         };
                         
-                        // Try OCR.space API first
+                        // Try Tesseract.js OCR first
                         try {
-                            const ocrResult = await this.performOCR(e.target.result);
-                            if (ocrResult && ocrResult.trim()) {
-                                imageData.ocrText = ocrResult;
-                                this.showToast('Text extracted from image', 'success');
+                            this.showToast('Extracting text from image...', 'info');
+                            
+                            const { data: { text } } = await Tesseract.recognize(
+                                e.target.result,
+                                'eng',
+                                {
+                                    logger: m => {
+                                        if (m.status === 'recognizing text') {
+                                            console.log(`OCR Progress: ${Math.round(m.progress * 100)}%`);
+                                        }
+                                    }
+                                }
+                            );
+                            
+                            if (text && text.trim().length > 3) {
+                                imageData.ocrText = text.trim();
+                                this.showToast('Text extracted successfully', 'success');
                                 resolve(imageData);
                                 return;
                             }
                         } catch (error) {
-                            console.log('OCR failed, falling back to manual input:', error);
+                            console.log('Tesseract OCR failed:', error);
+                            this.showToast('OCR processing failed, using manual input', 'info');
                         }
                         
                         // Fallback to manual input if OCR fails
-                        const userText = prompt('OCR failed. Please type any text you see in this image (or leave blank):');
+                        const userText = prompt('Please type any text you see in this image (or leave blank):');
                         if (userText && userText.trim()) {
                             imageData.ocrText = userText.trim();
                         }
