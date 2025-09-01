@@ -118,6 +118,7 @@
             cursor: pointer;
             box-shadow: 0 4px 12px rgba(33, 150, 243, 0.4);
             transition: all 0.3s;
+            z-index: 999;
         }
 
         .add-btn:hover {
@@ -860,16 +861,29 @@
             }
 
             generateTags(text) {
-                const words = text.toLowerCase().match(/\b\w{3,}\b/g) || [];
-                const commonWords = ['the', 'and', 'for', 'are', 'but', 'not', 'you', 'all', 'can', 'had', 'her', 'was', 'one', 'our', 'out', 'day', 'get', 'has', 'him', 'his', 'how', 'its', 'may', 'new', 'now', 'old', 'see', 'two', 'who', 'boy', 'did', 'end', 'few', 'got', 'man', 'own', 'say', 'she', 'too', 'use', 'png', 'jpg', 'jpeg', 'gif', 'pdf', 'doc', 'docx', 'txt', 'fov', 'etc', 'via'];
+                const words = text.toLowerCase().match(/\b\w{4,}\b/g) || [];
+                const excludeWords = new Set(['the', 'and', 'for', 'are', 'but', 'not', 'you', 'all', 'can', 'had', 'her', 'was', 'one', 'our', 'out', 'day', 'get', 'has', 'him', 'his', 'how', 'its', 'may', 'new', 'now', 'old', 'see', 'two', 'who', 'boy', 'did', 'end', 'few', 'got', 'man', 'own', 'say', 'she', 'too', 'use', 'png', 'jpg', 'jpeg', 'gif', 'pdf', 'doc', 'docx', 'txt', 'fov', 'etc', 'via', 'image', 'make', 'text', 'stand', 'from', 'will', 'with', 'have', 'this', 'that', 'they', 'what', 'when', 'where', 'would', 'could', 'should', 'about', 'after', 'before', 'other', 'first', 'last', 'time', 'year', 'week', 'some', 'more', 'only', 'also', 'well', 'very', 'much', 'good', 'great', 'just', 'like', 'back', 'here', 'there', 'then', 'than', 'over', 'into', 'such', 'each', 'most', 'many', 'same', 'long', 'down', 'take', 'come', 'find', 'look', 'want', 'give', 'need', 'work', 'know', 'think']);
                 
-                const tags = [...new Set(words)]
-                    .filter(word => !commonWords.includes(word))
-                    .filter(word => word.length > 2 && word.length < 15) // Reasonable length range
-                    .filter(word => /^[a-z]+$/i.test(word)) // Only alphabetic characters
-                    .slice(0, 5);
-                    
-                return tags;
+                // Get unique words excluding common ones
+                const meaningfulWords = [...new Set(words)]
+                    .filter(word => !excludeWords.has(word))
+                    .filter(word => word.length >= 4 && word.length <= 12)
+                    .filter(word => /^[a-z]+$/i.test(word))
+                    .filter(word => !word.match(/^\d/)); // No words starting with numbers
+                
+                // Use frequency analysis to pick best tags
+                const wordFreq = {};
+                meaningfulWords.forEach(word => {
+                    const count = (text.toLowerCase().match(new RegExp(`\\b${word}\\b`, 'g')) || []).length;
+                    wordFreq[word] = count;
+                });
+                
+                // Return top 5 by frequency, but prioritize domain-specific words
+                const sortedByFreq = Object.entries(wordFreq)
+                    .sort((a, b) => b[1] - a[1])
+                    .map(([word]) => word);
+                
+                return sortedByFreq.slice(0, 5);
             }
 
             findRelatedNotes(currentNote, allNotes) {
