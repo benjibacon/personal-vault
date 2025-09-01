@@ -319,6 +319,10 @@
             transform: translateX(0);
         }
 
+        .toast.hide {
+            transform: translateX(100%);
+        }
+
         .toast.success { background: #4CAF50; }
         .toast.error { background: #f44336; }
         .toast.info { background: #2196F3; }
@@ -685,9 +689,28 @@
                     categoryFeedback: [],
                     ocrPatterns: [],
                     goodOCRExamples: [],
-                    customCategories: []
+                    customCategories: [],
+                    contentPatterns: [], // NEW: Learn user's writing patterns
+                    semanticAssociations: [], // NEW: Learn word relationships
+                    workflowPatterns: [], // NEW: Learn user behavior
+                    contextualLearning: [] // NEW: Learn time/context patterns
                 };
                 return JSON.parse(localStorage.getItem('vault_learning')) || defaultData;
+            }
+
+            loadUserPatterns() {
+                const defaultPatterns = {
+                    commonPhrases: {},
+                    preferredTerms: {},
+                    categoryKeywords: {},
+                    timePatterns: {},
+                    usageStats: {}
+                };
+                return JSON.parse(localStorage.getItem('vault_patterns')) || defaultPatterns;
+            }
+
+            saveUserPatterns() {
+                localStorage.setItem('vault_patterns', JSON.stringify(this.userPatterns));
             }
 
             saveLearningData() {
@@ -747,24 +770,117 @@
                 this.showToast('OCR feedback recorded - system is learning!', 'success');
             }
 
-            getCurrentContext() {
+            // Enhanced Learning: Track all user interactions
+            learnFromUserBehavior(action, context) {
+                const now = new Date();
+                const timeKey = `${now.getHours()}-${now.getDay()}`;
+                
+                // Learn workflow patterns
+                if (!this.userPatterns.workflowPatterns[action]) {
+                    this.userPatterns.workflowPatterns[action] = [];
+                }
+                this.userPatterns.workflowPatterns[action].push({
+                    timestamp: now.toISOString(),
+                    context: context,
+                    timePattern: timeKey
+                });
+
+                // Learn time patterns
+                if (!this.userPatterns.timePatterns[timeKey]) {
+                    this.userPatterns.timePatterns[timeKey] = {};
+                }
+                if (!this.userPatterns.timePatterns[timeKey][context.category]) {
+                    this.userPatterns.timePatterns[timeKey][context.category] = 0;
+                }
+                this.userPatterns.timePatterns[timeKey][context.category]++;
+
+                this.saveUserPatterns();
+            }
+
+            // Enhanced Learning: Extract and learn user's writing patterns
+            learnContentPatterns(text, category) {
+                const phrases = text.match(/\b\w+(?:\s+\w+){1,3}\b/g) || [];
+                
+                phrases.forEach(phrase => {
+                    const key = phrase.toLowerCase();
+                    if (!this.userPatterns.commonPhrases[key]) {
+                        this.userPatterns.commonPhrases[key] = { count: 0, categories: {} };
+                    }
+                    this.userPatterns.commonPhrases[key].count++;
+                    
+                    if (!this.userPatterns.commonPhrases[key].categories[category]) {
+                        this.userPatterns.commonPhrases[key].categories[category] = 0;
+                    }
+                    this.userPatterns.commonPhrases[key].categories[category]++;
+                });
+
+                this.saveUserPatterns();
+            }
+
+            // Enhanced Learning: Learn semantic associations
+            learnSemanticAssociations(tags, category, content) {
+                tags.forEach(tag => {
+                    if (!this.userPatterns.preferredTerms[tag]) {
+                        this.userPatterns.preferredTerms[tag] = { 
+                            categories: {}, 
+                            relatedWords: {},
+                            strength: 1 
+                        };
+                    }
+                    
+                    if (!this.userPatterns.preferredTerms[tag].categories[category]) {
+                        this.userPatterns.preferredTerms[tag].categories[category] = 0;
+                    }
+                    this.userPatterns.preferredTerms[tag].categories[category]++;
+                    
+                    // Learn word relationships
+                    tags.forEach(otherTag => {
+                        if (otherTag !== tag) {
+                            if (!this.userPatterns.preferredTerms[tag].relatedWords[otherTag]) {
+                                this.userPatterns.preferredTerms[tag].relatedWords[otherTag] = 0;
+                            }
+                            this.userPatterns.preferredTerms[tag].relatedWords[otherTag]++;
+                        }
+                    });
+                });
+
+                this.saveUserPatterns();
+            }
                 return {
                     title: document.getElementById('noteTitle').value,
                     content: document.getElementById('noteContent').value.substring(0, 100)
                 };
             }
 
-            // Enhanced AI methods with learning
+            // Enhanced AI methods with deep learning integration
             categorizeContent(text) {
                 const content = text.toLowerCase();
                 let category = this.basicCategorize(content);
                 
-                // Apply learned patterns
+                // Apply learned user patterns first
+                let maxScore = 0;
+                let learnedCategory = null;
+                
+                for (const [phrase, data] of Object.entries(this.userPatterns.commonPhrases)) {
+                    if (content.includes(phrase) && data.count > 2) {
+                        for (const [cat, score] of Object.entries(data.categories)) {
+                            if (score > maxScore) {
+                                maxScore = score;
+                                learnedCategory = cat;
+                            }
+                        }
+                    }
+                }
+                
+                if (learnedCategory && maxScore > 3) {
+                    category = learnedCategory;
+                }
+                
+                // Apply explicit user corrections
                 for (const feedback of this.learningData.categoryFeedback) {
                     if (feedback.rating === 'bad' && 
-                        content.includes(feedback.context.title.toLowerCase()) ||
-                        content.includes(feedback.context.content.toLowerCase())) {
-                        // User corrected this type of content before
+                        (content.includes(feedback.context.title.toLowerCase()) ||
+                         content.includes(feedback.context.content.toLowerCase()))) {
                         category = feedback.actualCategory || category;
                         break;
                     }
@@ -812,33 +928,43 @@
                 const words = text.toLowerCase().match(/\b\w{3,}\b/g) || [];
                 const commonWords = ['the', 'and', 'for', 'are', 'but', 'not', 'you', 'all', 'can', 'had', 'her', 'was', 'one', 'our', 'out', 'day', 'get', 'has', 'him', 'his', 'how', 'its', 'may', 'new', 'now', 'old', 'see', 'two', 'who', 'boy', 'did', 'end', 'few', 'got', 'man', 'own', 'say', 'she', 'too', 'use'];
                 
-                const baseTags = [...new Set(words)]
+                // Get base tags and remove duplicates EARLY
+                const uniqueWords = [...new Set(words)]
                     .filter(word => !commonWords.includes(word))
                     .slice(0, 8);
 
                 // Apply learned preferences
-                const improvedTags = baseTags.filter(tag => {
+                const improvedTags = uniqueWords.filter(tag => {
                     const feedback = this.learningData.tagFeedback.find(f => f.tag === tag);
                     return !feedback || feedback.rating !== 'bad';
                 });
 
-                return improvedTags.slice(0, 5);
+                // CRITICAL: Remove duplicates one more time and limit to 5
+                return [...new Set(improvedTags)].slice(0, 5);
             }
 
             cleanOCRText(text) {
                 let cleaned = text;
                 
-                // Apply learned OCR patterns
+                // Apply learned OCR patterns first
                 for (const pattern of this.learningData.ocrPatterns) {
                     cleaned = cleaned.replace(new RegExp(pattern.original, 'gi'), pattern.corrected);
                 }
                 
-                // Basic OCR cleanup
+                // Advanced table cleanup for OCR
                 cleaned = cleaned
-                    .replace(/\|/g, 'I')
-                    .replace(/1(\d)/g, 'I$1')
-                    .replace(/(\d)1/g, '$1I')
-                    .replace(/\s+/g, ' ')
+                    // Remove table artifacts and borders
+                    .replace(/[|┌┐└┘├┤┬┴┼─│]/g, '')
+                    .replace(/\+[-=]+\+/g, '')
+                    .replace(/[-=]{3,}/g, '')
+                    // Fix common OCR mistakes
+                    .replace(/\b1(\w)/g, 'I$1')
+                    .replace(/(\w)1(\s|$)/g, '$1l$2')
+                    .replace(/\b0(\w)/g, 'O$1')
+                    .replace(/(\w)0(\s|$)/g, '$1o$2')
+                    // Clean spacing
+                    .replace(/\s{2,}/g, ' ')
+                    .replace(/\n\s*\n/g, '\n')
                     .trim();
                 
                 return cleaned;
