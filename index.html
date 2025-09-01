@@ -373,11 +373,6 @@
             color: white;
         }
 
-        .feedback-btn.neutral {
-            background: #ddd;
-            color: #666;
-        }
-
         .feedback-btn:hover {
             transform: scale(1.05);
         }
@@ -440,6 +435,15 @@
             color: #2e7d32;
         }
 
+        .time-suggestion {
+            background: #e3f2fd;
+            padding: 10px;
+            border-radius: 6px;
+            margin: 10px 0;
+            font-size: 13px;
+            color: #1565c0;
+        }
+
         @media (max-width: 768px) {
             .container {
                 padding: 15px;
@@ -496,7 +500,7 @@
                 <option value="Misc">Misc</option>
             </select>
             <button id="exportBtn" class="btn">Export to Obsidian</button>
-            <button id="learningBtn" class="btn btn-secondary">Learning Stats</button>
+            <button id="learningBtn" class="btn btn-secondary">🧠 Learning Stats</button>
         </div>
 
         <div id="notesContainer" class="notes-grid">
@@ -535,6 +539,9 @@
                 <h2 class="modal-title">Add Note</h2>
                 <button id="closeModal" class="close-btn">&times;</button>
             </div>
+
+            <!-- Time-based suggestion -->
+            <div id="timeSuggestion" class="time-suggestion" style="display: none;"></div>
             
             <div class="form-group">
                 <label for="noteTitle">Title</label>
@@ -637,8 +644,9 @@
                 this.predictedCategory = '';
                 this.suggestedTags = [];
                 
-                // Learning storage
+                // Learning storage with enhanced tracking
                 this.learningData = this.loadLearningData();
+                this.userPatterns = this.loadUserPatterns();
                 
                 this.init();
             }
@@ -680,6 +688,14 @@
                 document.getElementById('addModal').addEventListener('click', (e) => {
                     if (e.target.id === 'addModal') this.closeAddModal();
                 });
+
+                document.getElementById('viewModal').addEventListener('click', (e) => {
+                    if (e.target.id === 'viewModal') this.closeViewModal();
+                });
+
+                document.getElementById('learningModal').addEventListener('click', (e) => {
+                    if (e.target.id === 'learningModal') this.closeLearningModal();
+                });
             }
 
             // Learning System Methods
@@ -690,10 +706,10 @@
                     ocrPatterns: [],
                     goodOCRExamples: [],
                     customCategories: [],
-                    contentPatterns: [], // NEW: Learn user's writing patterns
-                    semanticAssociations: [], // NEW: Learn word relationships
-                    workflowPatterns: [], // NEW: Learn user behavior
-                    contextualLearning: [] // NEW: Learn time/context patterns
+                    contentPatterns: [],
+                    semanticAssociations: [],
+                    workflowPatterns: [],
+                    contextualLearning: []
                 };
                 return JSON.parse(localStorage.getItem('vault_learning')) || defaultData;
             }
@@ -704,13 +720,12 @@
                     preferredTerms: {},
                     categoryKeywords: {},
                     timePatterns: {},
-                    usageStats: {}
+                    usageStats: {},
+                    hourlyPatterns: {},  // Enhanced time tracking
+                    dailyPatterns: {},
+                    weeklyPatterns: {}
                 };
                 return JSON.parse(localStorage.getItem('vault_patterns')) || defaultPatterns;
-            }
-
-            saveUserPatterns() {
-                localStorage.setItem('vault_patterns', JSON.stringify(this.userPatterns));
             }
 
             saveLearningData() {
@@ -723,58 +738,36 @@
                 localStorage.setItem('vault_learning', JSON.stringify(this.learningData));
             }
 
-            recordTagFeedback(tag, rating) {
-                this.learningData.tagFeedback.push({
-                    tag,
-                    rating,
-                    timestamp: Date.now(),
-                    context: this.getCurrentContext()
-                });
-                this.saveLearningData();
-                this.showToast(`Tag "${tag}" rated as ${rating}`, 'success');
-            }
-
-            recordCategoryFeedback(rating) {
-                if (this.predictedCategory) {
-                    this.learningData.categoryFeedback.push({
-                        predictedCategory: this.predictedCategory,
-                        actualCategory: document.getElementById('noteCategory').value,
-                        rating,
-                        timestamp: Date.now(),
-                        context: this.getCurrentContext()
-                    });
-                    this.saveLearningData();
-                    this.showToast(`Category feedback recorded`, 'success');
-                }
-            }
-
-            recordOCRFeedback(rating) {
-                const originalText = this.currentOCRText;
-                const correctedText = document.getElementById('ocrText').textContent;
-                
-                if (rating === 'bad' && originalText !== correctedText) {
-                    // Learn from the correction
-                    this.learningData.ocrPatterns.push({
-                        original: originalText,
-                        corrected: correctedText,
-                        timestamp: Date.now()
-                    });
-                } else if (rating === 'good') {
-                    this.learningData.goodOCRExamples.push({
-                        text: originalText,
-                        timestamp: Date.now()
-                    });
-                }
-                
-                this.saveLearningData();
-                this.showToast('OCR feedback recorded - system is learning!', 'success');
+            saveUserPatterns() {
+                localStorage.setItem('vault_patterns', JSON.stringify(this.userPatterns));
             }
 
             // Enhanced Learning: Track all user interactions
             learnFromUserBehavior(action, context) {
                 const now = new Date();
-                const timeKey = `${now.getHours()}-${now.getDay()}`;
+                const hour = now.getHours();
+                const day = now.getDay();
+                const timeKey = `${hour}-${day}`;
+                const hourKey = `hour-${hour}`;
+                const dayKey = `day-${day}`;
                 
+                // Enhanced time pattern learning
+                if (!this.userPatterns.hourlyPatterns[hourKey]) {
+                    this.userPatterns.hourlyPatterns[hourKey] = {};
+                }
+                if (!this.userPatterns.hourlyPatterns[hourKey][context.category]) {
+                    this.userPatterns.hourlyPatterns[hourKey][context.category] = 0;
+                }
+                this.userPatterns.hourlyPatterns[hourKey][context.category]++;
+
+                if (!this.userPatterns.dailyPatterns[dayKey]) {
+                    this.userPatterns.dailyPatterns[dayKey] = {};
+                }
+                if (!this.userPatterns.dailyPatterns[dayKey][context.category]) {
+                    this.userPatterns.dailyPatterns[dayKey][context.category] = 0;
+                }
+                this.userPatterns.dailyPatterns[dayKey][context.category]++;
+
                 // Learn workflow patterns
                 if (!this.userPatterns.workflowPatterns[action]) {
                     this.userPatterns.workflowPatterns[action] = [];
@@ -782,17 +775,10 @@
                 this.userPatterns.workflowPatterns[action].push({
                     timestamp: now.toISOString(),
                     context: context,
+                    hour: hour,
+                    day: day,
                     timePattern: timeKey
                 });
-
-                // Learn time patterns
-                if (!this.userPatterns.timePatterns[timeKey]) {
-                    this.userPatterns.timePatterns[timeKey] = {};
-                }
-                if (!this.userPatterns.timePatterns[timeKey][context.category]) {
-                    this.userPatterns.timePatterns[timeKey][context.category] = 0;
-                }
-                this.userPatterns.timePatterns[timeKey][context.category]++;
 
                 this.saveUserPatterns();
             }
@@ -846,10 +832,59 @@
 
                 this.saveUserPatterns();
             }
+
+            getCurrentContext() {
                 return {
                     title: document.getElementById('noteTitle').value,
                     content: document.getElementById('noteContent').value.substring(0, 100)
                 };
+            }
+
+            recordTagFeedback(tag, rating) {
+                this.learningData.tagFeedback.push({
+                    tag,
+                    rating,
+                    timestamp: Date.now(),
+                    context: this.getCurrentContext()
+                });
+                this.saveLearningData();
+                this.showToast(`Tag "${tag}" rated as ${rating}`, 'success');
+            }
+
+            recordCategoryFeedback(rating) {
+                if (this.predictedCategory) {
+                    this.learningData.categoryFeedback.push({
+                        predictedCategory: this.predictedCategory,
+                        actualCategory: document.getElementById('noteCategory').value,
+                        rating,
+                        timestamp: Date.now(),
+                        context: this.getCurrentContext()
+                    });
+                    this.saveLearningData();
+                    this.showToast(`Category feedback recorded`, 'success');
+                }
+            }
+
+            recordOCRFeedback(rating) {
+                const originalText = this.currentOCRText;
+                const correctedText = document.getElementById('ocrText').textContent;
+                
+                if (rating === 'bad' && originalText !== correctedText) {
+                    // Learn from the correction
+                    this.learningData.ocrPatterns.push({
+                        original: originalText,
+                        corrected: correctedText,
+                        timestamp: Date.now()
+                    });
+                } else if (rating === 'good') {
+                    this.learningData.goodOCRExamples.push({
+                        text: originalText,
+                        timestamp: Date.now()
+                    });
+                }
+                
+                this.saveLearningData();
+                this.showToast('OCR feedback recorded - system is learning!', 'success');
             }
 
             // Enhanced AI methods with deep learning integration
@@ -970,6 +1005,42 @@
                 return cleaned;
             }
 
+            // Enhanced time-based suggestions
+            getTimeSuggestion() {
+                const now = new Date();
+                const hour = now.getHours();
+                const day = now.getDay();
+                const hourKey = `hour-${hour}`;
+                const dayKey = `day-${day}`;
+                
+                const hourPatterns = this.userPatterns.hourlyPatterns[hourKey];
+                const dayPatterns = this.userPatterns.dailyPatterns[dayKey];
+                
+                let suggestion = '';
+                
+                if (hourPatterns) {
+                    const topCategory = Object.entries(hourPatterns)
+                        .sort(([,a], [,b]) => b - a)[0];
+                    
+                    if (topCategory && topCategory[1] > 2) {
+                        const timeOfDay = hour < 12 ? 'morning' : hour < 18 ? 'afternoon' : 'evening';
+                        suggestion = `💡 You usually create ${topCategory[0]} content in the ${timeOfDay}. `;
+                    }
+                }
+                
+                if (dayPatterns) {
+                    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+                    const topDayCategory = Object.entries(dayPatterns)
+                        .sort(([,a], [,b]) => b - a)[0];
+                    
+                    if (topDayCategory && topDayCategory[1] > 3) {
+                        suggestion += `On ${days[day]}s, you often work on ${topDayCategory[0]} notes.`;
+                    }
+                }
+                
+                return suggestion;
+            }
+
             updateSuggestions() {
                 const title = document.getElementById('noteTitle').value;
                 const content = document.getElementById('noteContent').value;
@@ -994,4 +1065,422 @@
                 container.innerHTML = this.suggestedTags.map(tag => `
                     <div class="tag-item">
                         ${tag}
-                        <button class="feedback-btn good" onclick="event.stopPropagation(); window.personalVault.recordTagFeedback('${tag}', 'good')" title="Good tag">👍</button
+                        <button class="feedback-btn good" onclick="event.stopPropagation(); window.personalVault.recordTagFeedback('${tag}', 'good')" title="Good tag">👍</button>
+                        <button class="feedback-btn bad" onclick="event.stopPropagation(); window.personalVault.recordTagFeedback('${tag}', 'bad')" title="Bad tag">👎</button>
+                    </div>
+                `).join('');
+            }
+
+            openAddModal() {
+                document.getElementById('addModal').classList.add('show');
+                document.getElementById('noteTitle').value = '';
+                document.getElementById('noteContent').value = '';
+                document.getElementById('noteCategory').value = '';
+                document.getElementById('imageInput').value = '';
+                document.getElementById('ocrSection').style.display = 'none';
+                document.getElementById('categoryFeedback').style.display = 'none';
+                
+                // Show time-based suggestion
+                const timeSuggestion = this.getTimeSuggestion();
+                const suggestionEl = document.getElementById('timeSuggestion');
+                if (timeSuggestion) {
+                    suggestionEl.textContent = timeSuggestion;
+                    suggestionEl.style.display = 'block';
+                } else {
+                    suggestionEl.style.display = 'none';
+                }
+                
+                document.getElementById('noteTitle').focus();
+            }
+
+            closeAddModal() {
+                document.getElementById('addModal').classList.remove('show');
+                this.stopVoiceRecording();
+            }
+
+            closeLearningModal() {
+                document.getElementById('learningModal').classList.remove('show');
+            }
+
+            viewNote(id) {
+                const note = this.notes.find(n => n.id === id);
+                if (!note) return;
+
+                // Learn from view behavior
+                this.learnFromUserBehavior('view_note', {
+                    category: note.category,
+                    hasImage: note.type === 'image',
+                    ageInDays: Math.floor((Date.now() - new Date(note.timestamp)) / (1000 * 60 * 60 * 24))
+                });
+
+                document.getElementById('viewTitle').textContent = note.title;
+                document.getElementById('viewContent').innerHTML = `
+                    ${note.type === 'image' && note.imageData ? 
+                        `<img src="${note.imageData.dataUrl}" alt="Note image" style="max-width: 100%; border-radius: 8px; margin-bottom: 15px;">` : ''}
+                    ${note.content}
+                `;
+                
+                document.getElementById('viewMeta').innerHTML = `
+                    <div>Category: <span class="category-badge ${note.category.toLowerCase()}">${note.category}</span></div>
+                    <div style="margin-top: 8px;">Created: ${new Date(note.timestamp).toLocaleString()}</div>
+                    ${note.tags.length > 0 ? `<div style="margin-top: 8px;">Tags: ${note.tags.join(', ')}</div>` : ''}
+                `;
+
+                document.getElementById('viewModal').classList.add('show');
+            }
+
+            closeViewModal() {
+                document.getElementById('viewModal').classList.remove('show');
+            }
+
+            async saveNote() {
+                const title = document.getElementById('noteTitle').value.trim();
+                const content = document.getElementById('noteContent').value.trim();
+                const manualCategory = document.getElementById('noteCategory').value;
+                const imageFile = document.getElementById('imageInput').files[0];
+
+                if (!title && !content && !imageFile) {
+                    this.showToast('Please add some content', 'error');
+                    return;
+                }
+
+                // Create note object
+                const combinedText = title + ' ' + content;
+                const note = {
+                    id: Date.now(),
+                    title: title || 'Untitled Note',
+                    content: content,
+                    category: manualCategory || this.categorizeContent(combinedText),
+                    timestamp: new Date().toISOString(),
+                    tags: this.generateTags(combinedText),
+                    type: 'text'
+                };
+
+                // Handle image if present
+                if (imageFile) {
+                    note.type = 'image';
+                    note.imageData = await this.processImage(imageFile);
+                    
+                    if (note.imageData.ocrText) {
+                        const fullText = combinedText + ' ' + note.imageData.ocrText;
+                        note.category = manualCategory || this.categorizeContent(fullText);
+                        const ocrTags = this.generateTags(note.imageData.ocrText);
+                        // Ensure no duplicates when combining tags
+                        note.tags = [...new Set([...note.tags, ...ocrTags])].slice(0, 6);
+                    }
+                }
+
+                // ENHANCED LEARNING: Learn from this save action
+                this.learnFromUserBehavior('save_note', {
+                    category: note.category,
+                    hasImage: !!imageFile,
+                    contentLength: combinedText.length,
+                    tagCount: note.tags.length
+                });
+
+                // Learn content patterns and semantic associations
+                this.learnContentPatterns(combinedText, note.category);
+                this.learnSemanticAssociations(note.tags, note.category, combinedText);
+
+                // Save note
+                this.saveNoteToDB(note);
+                this.loadNotes();
+                this.closeAddModal();
+                this.showToast('Note saved successfully! AI learned from your input.', 'success');
+            }
+
+            saveNoteToDB(note) {
+                // Get existing notes
+                let notes = JSON.parse(localStorage.getItem('vault_notes')) || [];
+                
+                // Add new note
+                notes.push(note);
+                
+                // Save back to localStorage
+                localStorage.setItem('vault_notes', JSON.stringify(notes));
+            }
+
+            loadNotes() {
+                const notes = JSON.parse(localStorage.getItem('vault_notes')) || [];
+                this.notes = notes;
+                this.displayNotes(notes);
+                this.updateStats(notes);
+            }
+
+            displayNotes(notes) {
+                const notesContainer = document.getElementById('notesContainer');
+                
+                if (notes.length === 0) {
+                    notesContainer.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📝</div>
+                            <h2>No notes yet</h2>
+                            <p>Click the + button to add your first note!</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                notesContainer.innerHTML = notes.map(note => `
+                    <div class="note-card" data-category="${note.category}" data-id="${note.id}" onclick="window.personalVault.viewNote(${note.id})">
+                        <div class="note-title">${note.title}</div>
+                        <div class="note-content">
+                            ${note.type === 'image' && note.imageData ? 
+                                `<img src="${note.imageData.dataUrl}" alt="Note image" style="max-width: 100%; border-radius: 4px; margin-bottom: 10px;">` : ''}
+                            ${note.content || 'No text content'}
+                        </div>
+                        <div class="note-meta">
+                            <span class="category-badge ${note.category.toLowerCase()}">${note.category}</span>
+                            <small>${new Date(note.timestamp).toLocaleDateString()}</small>
+                            <button class="delete-btn" onclick="event.stopPropagation(); window.personalVault.deleteNote(${note.id})" style="background: #f44336; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 12px;">Delete</button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            updateStats(notes) {
+                document.getElementById('totalNotes').textContent = notes.length;
+                
+                // Calculate learning score
+                const tagFeedbacks = this.learningData.tagFeedback.length;
+                const categoryFeedbacks = this.learningData.categoryFeedback.length;
+                const ocrLearnings = this.learningData.ocrPatterns.length;
+                const learningScore = tagFeedbacks + categoryFeedbacks + ocrLearnings;
+                
+                document.getElementById('learningScore').textContent = learningScore;
+            }
+
+            async processImage(file) {
+                return new Promise(async (resolve) => {
+                    const reader = new FileReader();
+                    reader.onload = async (e) => {
+                        const imageData = {
+                            dataUrl: e.target.result,
+                            fileName: file.name,
+                            fileSize: file.size,
+                            ocrText: null
+                        };
+                        
+                        // Manual text input for images (simulating OCR)
+                        const userText = prompt('Describe this image or type any text you see (for better categorization):');
+                        if (userText && userText.trim()) {
+                            const cleanedText = this.cleanOCRText(userText.trim());
+                            imageData.ocrText = cleanedText;
+                            this.currentOCRText = cleanedText;
+                            
+                            // Show OCR section with editable text
+                            document.getElementById('ocrSection').style.display = 'block';
+                            document.getElementById('ocrText').textContent = cleanedText;
+                        }
+                        
+                        resolve(imageData);
+                    };
+                    reader.readAsDataURL(file);
+                });
+            }
+
+            filterNotes(category) {
+                // Learn from filter usage
+                this.learnFromUserBehavior('filter_notes', {
+                    category: category || 'all',
+                    hasImage: false,
+                    contentLength: 0,
+                    tagCount: 0
+                });
+
+                const filteredNotes = category ? 
+                    this.notes.filter(note => note.category === category) : 
+                    this.notes;
+                this.displayNotes(filteredNotes);
+            }
+
+            searchNotes(query) {
+                if (!query) {
+                    this.displayNotes(this.notes);
+                    return;
+                }
+                
+                // Learn from search behavior
+                this.learnFromUserBehavior('search_notes', {
+                    category: 'search',
+                    hasImage: false,
+                    contentLength: query.length,
+                    tagCount: 0
+                });
+                
+                const searchResults = this.notes.filter(note => 
+                    note.title.toLowerCase().includes(query.toLowerCase()) ||
+                    note.content.toLowerCase().includes(query.toLowerCase()) ||
+                    note.tags.some(tag => tag.toLowerCase().includes(query.toLowerCase()))
+                );
+                
+                this.displayNotes(searchResults);
+            }
+
+            async toggleVoiceRecording() {
+                if (this.isRecording) {
+                    this.stopVoiceRecording();
+                } else {
+                    this.startVoiceRecording();
+                }
+            }
+
+            async startVoiceRecording() {
+                // Check if browser supports speech recognition
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                
+                if (!SpeechRecognition) {
+                    this.showToast('Voice input not supported', 'error');
+                    return;
+                }
+
+                const recognition = new SpeechRecognition();
+                recognition.continuous = false;
+                recognition.interimResults = false;
+                recognition.lang = 'en-US';
+
+                const voiceBtn = document.getElementById('voiceBtn');
+                voiceBtn.textContent = '🔴 Recording...';
+                voiceBtn.classList.add('recording');
+                this.isRecording = true;
+
+                recognition.onresult = (event) => {
+                    const transcript = event.results[0][0].transcript;
+                    const noteContent = document.getElementById('noteContent');
+                    noteContent.value += (noteContent.value ? ' ' : '') + transcript;
+                    
+                    // Learn from voice usage
+                    this.learnFromUserBehavior('voice_input', {
+                        category: 'voice',
+                        hasImage: false,
+                        contentLength: transcript.length,
+                        tagCount: 0
+                    });
+
+                    // Update suggestions after voice input
+                    this.updateSuggestions();
+                };
+
+                recognition.onerror = (event) => {
+                    this.showToast('Voice recognition error', 'error');
+                    this.stopVoiceRecording();
+                };
+
+                recognition.onend = () => {
+                    this.stopVoiceRecording();
+                };
+
+                recognition.start();
+                this.showToast('Listening...', 'info');
+            }
+
+            stopVoiceRecording() {
+                this.isRecording = false;
+                const voiceBtn = document.getElementById('voiceBtn');
+                voiceBtn.textContent = '🎤 Voice';
+                voiceBtn.classList.remove('recording');
+            }
+
+            async handleImageUpload(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                // Learn from image usage
+                this.learnFromUserBehavior('image_upload', {
+                    category: 'image',
+                    hasImage: true,
+                    contentLength: 0,
+                    tagCount: 0
+                });
+
+                // Process image with OCR
+                const imageData = await this.processImage(file);
+                
+                // Add extracted text to note content if any was found
+                if (imageData.ocrText) {
+                    const noteContent = document.getElementById('noteContent');
+                    const currentContent = noteContent.value;
+                    const extractedText = `[Image: ${file.name}]\nExtracted text: ${imageData.ocrText}`;
+                    noteContent.value = currentContent + (currentContent ? '\n\n' : '') + extractedText;
+                    
+                    // Update suggestions with new content
+                    this.updateSuggestions();
+                } else {
+                    this.showToast('No text detected in image', 'info');
+                }
+            }
+
+            deleteNote(id) {
+                // Learn from delete behavior
+                const note = this.notes.find(n => n.id === id);
+                if (note) {
+                    this.learnFromUserBehavior('delete_note', {
+                        category: note.category,
+                        hasImage: note.type === 'image',
+                        contentLength: note.content.length,
+                        tagCount: note.tags.length
+                    });
+                }
+
+                let notes = JSON.parse(localStorage.getItem('vault_notes')) || [];
+                notes = notes.filter(note => note.id !== id);
+                localStorage.setItem('vault_notes', JSON.stringify(notes));
+                this.loadNotes();
+                this.showToast('Note deleted', 'success');
+            }
+
+            showLearningStats() {
+                const totalInteractions = this.learningData.tagFeedback.length + 
+                                        this.learningData.categoryFeedback.length + 
+                                        this.learningData.ocrPatterns.length;
+
+                const hourlyData = Object.entries(this.userPatterns.hourlyPatterns)
+                    .map(([hour, cats]) => {
+                        const hourNum = hour.replace('hour-', '');
+                        const topCat = Object.entries(cats).sort(([,a], [,b]) => b - a)[0];
+                        return `${hourNum}:00 - ${topCat ? topCat[0] : 'No data'} (${topCat ? topCat[1] : 0} notes)`;
+                    }).join('<br>');
+
+                const contentHTML = `
+                    <p><strong>Total Learning Interactions:</strong> ${totalInteractions}</p>
+                    <p><strong>Tag Feedbacks:</strong> ${this.learningData.tagFeedback.length}</p>
+                    <p><strong>Category Corrections:</strong> ${this.learningData.categoryFeedback.length}</p>
+                    <p><strong>OCR Pattern Learnings:</strong> ${this.learningData.ocrPatterns.length}</p>
+                    <br>
+                    <h4>⏰ Your Time Patterns:</h4>
+                    <div style="font-size: 12px; margin: 10px 0;">
+                        ${hourlyData || 'No time patterns learned yet'}
+                    </div>
+                    <br>
+                    <p><strong>Common Phrases Learned:</strong> ${Object.keys(this.userPatterns.commonPhrases).length}</p>
+                    <p><strong>Preferred Terms:</strong> ${Object.keys(this.userPatterns.preferredTerms).length}</p>
+                `;
+
+                document.getElementById('learningStatsContent').innerHTML = contentHTML;
+                document.getElementById('learningModal').classList.add('show');
+            }
+
+            showToast(message, type = 'info') {
+                const toast = document.getElementById('toast');
+                toast.textContent = message;
+                toast.className = `toast show ${type}`;
+                
+                // Fixed: Properly hide toast with class management
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                    toast.classList.add('hide');
+                    setTimeout(() => {
+                        toast.classList.remove('hide');
+                        toast.className = 'toast'; // Reset completely
+                    }, 300);
+                }, 3000);
+            }
+        }
+
+        // Initialize app when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            window.personalVault = new PersonalVault();
+        });
+    </script>
+</body>
+</html>
