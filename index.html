@@ -1134,59 +1134,64 @@
             }
 
             async saveNote() {
-                const title = document.getElementById('noteTitle').value.trim();
-                const content = document.getElementById('noteContent').value.trim();
-                const manualCategory = document.getElementById('noteCategory').value;
-                const imageFile = document.getElementById('imageInput').files[0];
+                try {
+                    const title = document.getElementById('noteTitle').value.trim();
+                    const content = document.getElementById('noteContent').value.trim();
+                    const manualCategory = document.getElementById('noteCategory').value;
+                    const imageFile = document.getElementById('imageInput').files[0];
 
-                if (!title && !content && !imageFile) {
-                    this.showToast('Please add some content', 'error');
-                    return;
-                }
-
-                // Create note object
-                const combinedText = title + ' ' + content;
-                const note = {
-                    id: Date.now(),
-                    title: title || 'Untitled Note',
-                    content: content,
-                    category: manualCategory || this.categorizeContent(combinedText),
-                    timestamp: new Date().toISOString(),
-                    tags: this.generateTags(combinedText),
-                    type: 'text'
-                };
-
-                // Handle image if present
-                if (imageFile) {
-                    note.type = 'image';
-                    note.imageData = await this.processImage(imageFile);
-                    
-                    if (note.imageData.ocrText) {
-                        const fullText = combinedText + ' ' + note.imageData.ocrText;
-                        note.category = manualCategory || this.categorizeContent(fullText);
-                        const ocrTags = this.generateTags(note.imageData.ocrText);
-                        // Ensure no duplicates when combining tags
-                        note.tags = [...new Set([...note.tags, ...ocrTags])].slice(0, 6);
+                    if (!title && !content && !imageFile) {
+                        this.showToast('Please add some content', 'error');
+                        return;
                     }
+
+                    // Create note object
+                    const combinedText = title + ' ' + content;
+                    const note = {
+                        id: Date.now(),
+                        title: title || 'Untitled Note',
+                        content: content,
+                        category: manualCategory || this.categorizeContent(combinedText),
+                        timestamp: new Date().toISOString(),
+                        tags: this.generateTags(combinedText),
+                        type: 'text'
+                    };
+
+                    // Handle image if present
+                    if (imageFile) {
+                        note.type = 'image';
+                        note.imageData = await this.processImage(imageFile);
+                        
+                        if (note.imageData && note.imageData.ocrText) {
+                            const fullText = combinedText + ' ' + note.imageData.ocrText;
+                            note.category = manualCategory || this.categorizeContent(fullText);
+                            const ocrTags = this.generateTags(note.imageData.ocrText);
+                            // Ensure no duplicates when combining tags
+                            note.tags = [...new Set([...note.tags, ...ocrTags])].slice(0, 6);
+                        }
+                    }
+
+                    // ENHANCED LEARNING: Learn from this save action
+                    this.learnFromUserBehavior('save_note', {
+                        category: note.category,
+                        hasImage: !!imageFile,
+                        contentLength: combinedText.length,
+                        tagCount: note.tags.length
+                    });
+
+                    // Learn content patterns and semantic associations
+                    this.learnContentPatterns(combinedText, note.category);
+                    this.learnSemanticAssociations(note.tags, note.category, combinedText);
+
+                    // Save note
+                    this.saveNoteToDB(note);
+                    this.loadNotes();
+                    this.closeAddModal();
+                    this.showToast('Note saved successfully! AI learned from your input.', 'success');
+                } catch (error) {
+                    console.error('Save error:', error);
+                    this.showToast('Error saving note. Please try again.', 'error');
                 }
-
-                // ENHANCED LEARNING: Learn from this save action
-                this.learnFromUserBehavior('save_note', {
-                    category: note.category,
-                    hasImage: !!imageFile,
-                    contentLength: combinedText.length,
-                    tagCount: note.tags.length
-                });
-
-                // Learn content patterns and semantic associations
-                this.learnContentPatterns(combinedText, note.category);
-                this.learnSemanticAssociations(note.tags, note.category, combinedText);
-
-                // Save note
-                this.saveNoteToDB(note);
-                this.loadNotes();
-                this.closeAddModal();
-                this.showToast('Note saved successfully! AI learned from your input.', 'success');
             }
 
             saveNoteToDB(note) {
@@ -1251,9 +1256,9 @@
             }
 
             async processImage(file) {
-                return new Promise(async (resolve) => {
+                return new Promise((resolve) => {
                     const reader = new FileReader();
-                    reader.onload = async (e) => {
+                    reader.onload = (e) => {
                         const imageData = {
                             dataUrl: e.target.result,
                             fileName: file.name,
