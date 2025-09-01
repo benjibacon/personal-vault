@@ -609,9 +609,59 @@
                 const relatedNotes = this.findRelatedNotes(note, this.notes);
                 
                 document.getElementById('viewMeta').innerHTML = `
-                    <div>Category: <span class="category-badge ${note.category.toLowerCase()}">${note.category}</span></div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <div>Category: <span class="category-badge ${note.category.toLowerCase()}">${note.category}</span></div>
+                        <div>
+                            <button onclick="window.personalVault.feedbackCategory(${note.id}, true)" style="background: #4CAF50; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 12px; margin-right: 4px;" title="Category is correct">✓</button>
+                            <button onclick="window.personalVault.feedbackCategory(${note.id}, false)" style="background: #f44336; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 12px;" title="Category is wrong">✗</button>
+                        </div>
+                    </div>
                     <div style="margin-top: 8px;">Created: ${new Date(note.timestamp).toLocaleString()}</div>
-                    ${note.tags.length > 0 ? `<div style="margin-top: 8px;">Tags: ${note.tags.join(', ')}</div>` : ''}
+                    ${note.tags.length > 0 ? `
+                        <div style="margin-top: 8px;">
+                            <div style="font-weight: 500; margin-bottom: 4px;">Tags:</div>
+                            <div id="editableTags">
+                                ${note.tags.map((tag, index) => `
+                                    <span class="editable-tag" style="
+                                        display: inline-block; 
+                                        padding: 2px 6px; 
+                                        margin: 2px; 
+                                        background: #e3f2fd; 
+                                        border-radius: 12px; 
+                                        font-size: 12px;
+                                        cursor: pointer;
+                                        border: 1px solid transparent;
+                                    " onclick="window.personalVault.editTag(${note.id}, ${index}, '${tag}')" title="Click to edit">
+                                        ${tag}
+                                    </span>
+                                `).join('')}
+                                <span onclick="window.personalVault.addTag(${note.id})" style="
+                                    display: inline-block; 
+                                    padding: 2px 6px; 
+                                    margin: 2px; 
+                                    background: #f5f5f5; 
+                                    border: 1px dashed #ccc;
+                                    border-radius: 12px; 
+                                    font-size: 12px;
+                                    cursor: pointer;
+                                    color: #666;
+                                " title="Add new tag">+ Add Tag</span>
+                            </div>
+                        </div>
+                    ` : `
+                        <div style="margin-top: 8px;">
+                            <span onclick="window.personalVault.addTag(${note.id})" style="
+                                display: inline-block; 
+                                padding: 4px 8px; 
+                                background: #f5f5f5; 
+                                border: 1px dashed #ccc;
+                                border-radius: 12px; 
+                                font-size: 12px;
+                                cursor: pointer;
+                                color: #666;
+                            ">+ Add Tags</span>
+                        </div>
+                    `}
                     ${relatedNotes.length > 0 ? `
                         <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #eee;">
                             <div style="font-weight: 600; margin-bottom: 8px;">Related Notes:</div>
@@ -1209,6 +1259,88 @@
                             ${tag} (${count})
                         </span>
                     `).join('');
+            }
+
+            feedbackCategory(noteId, isCorrect) {
+                const note = this.notes.find(n => n.id === noteId);
+                if (!note) return;
+                
+                if (isCorrect) {
+                    // Store positive feedback
+                    this.storeCategoryFeedback(note.title + ' ' + note.content, note.category, true);
+                    this.showToast('Thanks! Category feedback recorded', 'success');
+                } else {
+                    // Show category selector for correction
+                    const correctCategory = prompt(`Current category: ${note.category}\n\nWhat should the category be?\n\nOptions: Recipes, Coding, Music, Games, Hobbies, Learning, Misc`);
+                    
+                    if (correctCategory && this.categories.includes(correctCategory)) {
+                        // Update note category
+                        note.category = correctCategory;
+                        this.updateNoteInStorage(note);
+                        
+                        // Store negative feedback with correction
+                        this.storeCategoryFeedback(note.title + ' ' + note.content, correctCategory, false);
+                        
+                        // Refresh view
+                        this.loadNotes();
+                        this.viewNote(noteId);
+                        
+                        this.showToast('Category updated and feedback recorded', 'success');
+                    }
+                }
+            }
+
+            storeCategoryFeedback(content, category, isCorrect) {
+                let feedback = JSON.parse(localStorage.getItem('category_feedback')) || [];
+                feedback.push({
+                    content: content.toLowerCase(),
+                    category: category,
+                    correct: isCorrect,
+                    timestamp: new Date().toISOString()
+                });
+                
+                // Keep only last 100 feedback items
+                if (feedback.length > 100) {
+                    feedback = feedback.slice(-100);
+                }
+                
+                localStorage.setItem('category_feedback', JSON.stringify(feedback));
+            }
+
+            editTag(noteId, tagIndex, currentTag) {
+                const newTag = prompt(`Edit tag:`, currentTag);
+                if (newTag && newTag.trim() && newTag !== currentTag) {
+                    const note = this.notes.find(n => n.id === noteId);
+                    if (note) {
+                        note.tags[tagIndex] = newTag.trim();
+                        this.updateNoteInStorage(note);
+                        this.viewNote(noteId); // Refresh view
+                        this.showToast('Tag updated', 'success');
+                    }
+                }
+            }
+
+            addTag(noteId) {
+                const newTag = prompt('Add new tag:');
+                if (newTag && newTag.trim()) {
+                    const note = this.notes.find(n => n.id === noteId);
+                    if (note) {
+                        note.tags.push(newTag.trim());
+                        this.updateNoteInStorage(note);
+                        this.viewNote(noteId); // Refresh view
+                        this.showToast('Tag added', 'success');
+                    }
+                }
+            }
+
+            updateNoteInStorage(updatedNote) {
+                let notes = JSON.parse(localStorage.getItem('vault_notes')) || [];
+                const index = notes.findIndex(n => n.id === updatedNote.id);
+                if (index !== -1) {
+                    notes[index] = updatedNote;
+                    localStorage.setItem('vault_notes', JSON.stringify(notes));
+                    this.notes = notes;
+                }
             }
 
             async toggleVoiceRecording() {
