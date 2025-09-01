@@ -623,7 +623,8 @@
                             <div id="editableTags">
                                 ${note.tags.map((tag, index) => `
                                     <span class="editable-tag" style="
-                                        display: inline-block; 
+                                        display: inline-flex;
+                                        align-items: center;
                                         padding: 2px 6px; 
                                         margin: 2px; 
                                         background: #e3f2fd; 
@@ -633,6 +634,12 @@
                                         border: 1px solid transparent;
                                     " onclick="window.personalVault.editTag(${note.id}, ${index}, '${tag}')" title="Click to edit">
                                         ${tag}
+                                        <span onclick="event.stopPropagation(); window.personalVault.deleteTag(${note.id}, ${index})" style="
+                                            margin-left: 4px;
+                                            color: #666;
+                                            font-weight: bold;
+                                            cursor: pointer;
+                                        " title="Delete tag">×</span>
                                     </span>
                                 `).join('')}
                                 <span onclick="window.personalVault.addTag(${note.id})" style="
@@ -854,10 +861,12 @@
 
             generateTags(text) {
                 const words = text.toLowerCase().match(/\b\w{3,}\b/g) || [];
-                const commonWords = ['the', 'and', 'for', 'are', 'but', 'not', 'you', 'all', 'can', 'had', 'her', 'was', 'one', 'our', 'out', 'day', 'get', 'has', 'him', 'his', 'how', 'its', 'may', 'new', 'now', 'old', 'see', 'two', 'who', 'boy', 'did', 'end', 'few', 'got', 'man', 'own', 'say', 'she', 'too', 'use'];
+                const commonWords = ['the', 'and', 'for', 'are', 'but', 'not', 'you', 'all', 'can', 'had', 'her', 'was', 'one', 'our', 'out', 'day', 'get', 'has', 'him', 'his', 'how', 'its', 'may', 'new', 'now', 'old', 'see', 'two', 'who', 'boy', 'did', 'end', 'few', 'got', 'man', 'own', 'say', 'she', 'too', 'use', 'png', 'jpg', 'jpeg', 'gif', 'pdf', 'doc', 'docx', 'txt', 'fov', 'etc', 'via'];
                 
                 const tags = [...new Set(words)]
                     .filter(word => !commonWords.includes(word))
+                    .filter(word => word.length > 2 && word.length < 15) // Reasonable length range
+                    .filter(word => /^[a-z]+$/i.test(word)) // Only alphabetic characters
                     .slice(0, 5);
                     
                 return tags;
@@ -1330,6 +1339,16 @@
                         this.viewNote(noteId); // Refresh view
                         this.showToast('Tag added', 'success');
                     }
+                }
+            }
+
+            deleteTag(noteId, tagIndex) {
+                const note = this.notes.find(n => n.id === noteId);
+                if (note && confirm('Delete this tag?')) {
+                    note.tags.splice(tagIndex, 1);
+                    this.updateNoteInStorage(note);
+                    this.viewNote(noteId); // Refresh view
+                    this.showToast('Tag deleted', 'success');
                 }
             }
 
