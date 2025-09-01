@@ -492,17 +492,22 @@
             </div>
             
             <div class="form-group">
-                <label for="noteCategory">Category (optional)</label>
-                <select id="noteCategory">
-                    <option value="">Auto-detect</option>
-                    <option value="Recipes">Recipes</option>
-                    <option value="Coding">Coding</option>
-                    <option value="Music">Music</option>
-                    <option value="Games">Games</option>
-                    <option value="Hobbies">Hobbies</option>
-                    <option value="Learning">Learning</option>
-                    <option value="Misc">Misc</option>
-                </select>
+                <label for="noteCategory">Categories</label>
+                <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 10px;">
+                    <select id="noteCategory" style="flex: 1;">
+                        <option value="">Auto-detect</option>
+                        <option value="Recipes">Recipes</option>
+                        <option value="Coding">Coding</option>
+                        <option value="Music">Music</option>
+                        <option value="Games">Games</option>
+                        <option value="Hobbies">Hobbies</option>
+                        <option value="Learning">Learning</option>
+                        <option value="Misc">Misc</option>
+                    </select>
+                    <button type="button" onclick="window.personalVault.addNewCategory()" style="padding: 8px 12px; background: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">+ New</button>
+                </div>
+                <div id="selectedCategories" style="display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px;"></div>
+                <input type="hidden" id="categoryList" />
             </div>
 
             <div class="form-group">
@@ -561,6 +566,9 @@
                 // Category filter
                 document.getElementById('categoryFilter').addEventListener('change', (e) => this.filterNotes(e.target.value));
                 
+                // Category selection
+                document.getElementById('noteCategory').addEventListener('change', (e) => this.addCategoryToNote(e.target.value));
+                
                 // Search
                 document.getElementById('searchInput').addEventListener('input', (e) => this.searchNotes(e.target.value));
                 
@@ -583,9 +591,102 @@
                 document.getElementById('noteTitle').value = '';
                 document.getElementById('noteContent').value = '';
                 document.getElementById('noteCategory').value = '';
+                document.getElementById('categoryList').value = '';
+                document.getElementById('selectedCategories').innerHTML = '';
                 document.getElementById('imageInput').value = '';
                 document.querySelector('.modal-title').textContent = 'Add Note';
                 document.getElementById('noteTitle').focus();
+            }
+
+            addCategoryToNote(category) {
+                if (!category) return;
+                
+                const selectedCategoriesDiv = document.getElementById('selectedCategories');
+                const categoryListInput = document.getElementById('categoryList');
+                
+                // Get current categories
+                let currentCategories = categoryListInput.value ? categoryListInput.value.split(',') : [];
+                
+                // Add if not already present
+                if (!currentCategories.includes(category)) {
+                    currentCategories.push(category);
+                    categoryListInput.value = currentCategories.join(',');
+                    
+                    // Update display
+                    this.updateCategoryDisplay(currentCategories);
+                }
+                
+                // Reset dropdown
+                document.getElementById('noteCategory').value = '';
+            }
+
+            updateCategoryDisplay(categories) {
+                const selectedCategoriesDiv = document.getElementById('selectedCategories');
+                selectedCategoriesDiv.innerHTML = categories.map(category => `
+                    <span style="
+                        display: inline-flex;
+                        align-items: center;
+                        padding: 4px 8px;
+                        background: #e3f2fd;
+                        border-radius: 12px;
+                        font-size: 12px;
+                        margin: 2px;
+                    ">
+                        ${category}
+                        <span onclick="window.personalVault.removeCategoryFromNote('${category}')" style="
+                            margin-left: 6px;
+                            cursor: pointer;
+                            font-weight: bold;
+                            color: #666;
+                        " title="Remove category">×</span>
+                    </span>
+                `).join('');
+            }
+
+            removeCategoryFromNote(categoryToRemove) {
+                const categoryListInput = document.getElementById('categoryList');
+                let currentCategories = categoryListInput.value ? categoryListInput.value.split(',') : [];
+                
+                currentCategories = currentCategories.filter(cat => cat !== categoryToRemove);
+                categoryListInput.value = currentCategories.join(',');
+                
+                this.updateCategoryDisplay(currentCategories);
+            }
+
+            addNewCategory() {
+                const newCategory = prompt('Create new category:');
+                if (newCategory && newCategory.trim()) {
+                    const category = newCategory.trim();
+                    
+                    // Add to available categories if not exists
+                    if (!this.categories.includes(category)) {
+                        this.categories.push(category);
+                        this.updateCategoryDropdowns();
+                    }
+                    
+                    // Add to current note
+                    this.addCategoryToNote(category);
+                }
+            }
+
+            updateCategoryDropdowns() {
+                // Update add modal dropdown
+                const addModalSelect = document.getElementById('noteCategory');
+                const currentValue = addModalSelect.value;
+                addModalSelect.innerHTML = `
+                    <option value="">Select category</option>
+                    ${this.categories.map(cat => `<option value="${cat}">${cat}</option>`).join('')}
+                `;
+                addModalSelect.value = currentValue;
+                
+                // Update filter dropdown
+                const filterSelect = document.getElementById('categoryFilter');
+                const currentFilter = filterSelect.value;
+                filterSelect.innerHTML = `
+                    <option value="">All Categories</option>
+                    ${this.categories.map(cat => `<option value="${cat}">${cat}</option>`).join('')}
+                `;
+                filterSelect.value = currentFilter;
             }
 
             closeAddModal() {
@@ -611,10 +712,15 @@
                 
                 document.getElementById('viewMeta').innerHTML = `
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                        <div>Category: <span class="category-badge ${note.category.toLowerCase()}">${note.category}</span></div>
                         <div>
-                            <button onclick="window.personalVault.feedbackCategory(${note.id}, true)" style="background: #4CAF50; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 12px; margin-right: 4px;" title="Category is correct">✓</button>
-                            <button onclick="window.personalVault.feedbackCategory(${note.id}, false)" style="background: #f44336; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 12px;" title="Category is wrong">✗</button>
+                            Categories: 
+                            ${(note.categories || [note.category]).map(cat => 
+                                `<span class="category-badge ${cat.toLowerCase()}">${cat}</span>`
+                            ).join(' ')}
+                        </div>
+                        <div>
+                            <button onclick="window.personalVault.feedbackCategory(${note.id}, true)" style="background: #4CAF50; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 12px; margin-right: 4px;" title="Categories are correct">✓</button>
+                            <button onclick="window.personalVault.feedbackCategory(${note.id}, false)" style="background: #f44336; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 12px;" title="Categories need correction">✗</button>
                         </div>
                     </div>
                     <div style="margin-top: 8px;">Created: ${new Date(note.timestamp).toLocaleString()}</div>
@@ -634,9 +740,10 @@
                                         cursor: pointer;
                                         border: 1px solid transparent;
                                     " onclick="window.personalVault.editTag(${note.id}, ${index}, '${tag}')" title="Click to edit">
+                                        <button onclick="event.stopPropagation(); window.personalVault.feedbackTag(${note.id}, '${tag}', true)" style="background: #4CAF50; color: white; border: none; width: 14px; height: 14px; border-radius: 50%; font-size: 10px; margin-right: 4px; cursor: pointer;" title="Good tag">✓</button>
                                         ${tag}
+                                        <button onclick="event.stopPropagation(); window.personalVault.feedbackTag(${note.id}, '${tag}', false)" style="background: #f44336; color: white; border: none; width: 14px; height: 14px; border-radius: 50%; font-size: 10px; margin-left: 4px; margin-right: 2px; cursor: pointer;" title="Bad tag">✗</button>
                                         <span onclick="event.stopPropagation(); window.personalVault.deleteTag(${note.id}, ${index})" style="
-                                            margin-left: 4px;
                                             color: #666;
                                             font-weight: bold;
                                             cursor: pointer;
@@ -723,7 +830,7 @@
             async saveNote() {
                 const title = document.getElementById('noteTitle').value.trim();
                 const content = document.getElementById('noteContent').value.trim();
-                const manualCategory = document.getElementById('noteCategory').value;
+                const categoryList = document.getElementById('categoryList').value;
                 const imageFile = document.getElementById('imageInput').files[0];
 
                 if (!title && !content && !imageFile) {
@@ -731,13 +838,24 @@
                     return;
                 }
 
+                // Handle categories - use selected ones or auto-detect
+                let categories = [];
+                if (categoryList) {
+                    categories = categoryList.split(',').filter(cat => cat.trim());
+                } else {
+                    // Auto-detect single category
+                    const autoCategory = this.categorizeContent(title + ' ' + content);
+                    categories = [autoCategory];
+                }
+
                 // Create note object
                 const note = {
                     id: this.currentNoteId || Date.now(),
                     title: title || 'Untitled Note',
                     content: content,
-                    category: manualCategory || this.categorizeContent(title + ' ' + content),
-                    timestamp: this.currentNoteId ? this.notes.find(n => n.id === this.currentNoteId).timestamp : new Date().toISOString(),
+                    categories: categories, // Now multiple categories
+                    category: categories[0] || 'Misc', // Keep primary for compatibility
+                    timestamp: this.currentNoteId ? this.notes.find(n => n.id === this.currentNoteId)?.timestamp : new Date().toISOString(),
                     tags: this.generateTags(title + ' ' + content),
                     type: 'text'
                 };
@@ -749,7 +867,11 @@
                     // Re-categorize with OCR text if available
                     if (note.imageData.ocrText) {
                         const combinedText = title + ' ' + content + ' ' + note.imageData.ocrText;
-                        note.category = manualCategory || this.categorizeContent(combinedText);
+                        if (!categoryList) {
+                            // Only auto-detect if no manual categories selected
+                            note.category = this.categorizeContent(combinedText);
+                            note.categories = [note.category];
+                        }
                         note.tags = [...note.tags, ...this.generateTags(note.imageData.ocrText)];
                     }
                 }
@@ -1373,6 +1495,43 @@
                     notes[index] = updatedNote;
                     localStorage.setItem('vault_notes', JSON.stringify(notes));
                     this.notes = notes;
+                }
+            }
+
+            feedbackTag(noteId, tag, isGood) {
+                // Store tag feedback for learning
+                let tagFeedback = JSON.parse(localStorage.getItem('tag_feedback')) || [];
+                tagFeedback.push({
+                    tag: tag,
+                    isGood: isGood,
+                    timestamp: new Date().toISOString()
+                });
+                
+                // Keep only last 200 feedback items
+                if (tagFeedback.length > 200) {
+                    tagFeedback = tagFeedback.slice(-200);
+                }
+                
+                localStorage.setItem('tag_feedback', JSON.stringify(tagFeedback));
+                
+                const action = isGood ? 'good' : 'bad';
+                this.showToast(`Tag "${tag}" marked as ${action}`, 'info');
+                
+                // If bad tag, offer to delete it
+                if (!isGood) {
+                    setTimeout(() => {
+                        if (confirm(`Remove "${tag}" from this note?`)) {
+                            const note = this.notes.find(n => n.id === noteId);
+                            if (note) {
+                                const tagIndex = note.tags.indexOf(tag);
+                                if (tagIndex > -1) {
+                                    note.tags.splice(tagIndex, 1);
+                                    this.updateNoteInStorage(note);
+                                    this.viewNote(noteId);
+                                }
+                            }
+                        }
+                    }, 500);
                 }
             }
 
