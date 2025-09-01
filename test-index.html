@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personal Vault v2.0 - Core Module Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f7fa;
+            color: #333;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .test-section {
+            background: white;
+            margin: 20px 0;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .test-section h3 {
+            margin-top: 0;
+            color: #2196F3;
+            border-bottom: 2px solid #e3f2fd;
+            padding-bottom: 10px;
+        }
+        
+        .status {
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-weight: bold;
+            margin: 5px 0;
+            display: inline-block;
+        }
+        
+        .status.success { background: #e8f5e8; color: #2e7d32; }
+        .status.error { background: #ffebee; color: #c62828; }
+        .status.warning { background: #fff3e0; color: #f57c00; }
+        .status.info { background: #e3f2fd; color: #1976d2; }
+        
+        .controls {
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            background: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 0 10px;
+            font-size: 16px;
+        }
+        
+        .btn:hover {
+            background: #1976D2;
+        }
+        
+        .btn.secondary {
+            background: #666;
+        }
+        
+        .log-output {
+            background: #1a1a1a;
+            color: #00ff00;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+        
+        .test-results {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .module-status {
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #2196F3;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .stat-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2196F3;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Personal Vault v2.0</h1>
+        <p>Core Module Integration Test</p>
+        <div class="status info">System Status: <span id="systemStatus">Initializing...</span></div>
+    </div>
+
+    <div class="controls">
+        <button class="btn" onclick="runTests()">🧪 Run All Tests</button>
+        <button class="btn secondary" onclick="clearLog()">🗑️ Clear Log</button>
+        <button class="btn secondary" onclick="showSystemStats()">📊 System Stats</button>
+    </div>
+
+    <div class="test-section">
+        <h3>🔧 Module Status</h3>
+        <div class="test-results">
+            <div class="module-status">
+                <h4>Event Bus</h4>
+                <div id="eventBusStatus" class="status info">Not Loaded</div>
+                <div id="eventBusDetails"></div>
+            </div>
+            <div class="module-status">
+                <h4>Storage Manager</h4>
+                <div id="storageStatus" class="status info">Not Loaded</div>
+                <div id="storageDetails"></div>
+            </div>
+            <div class="module-status">
+                <h4>Module Loader</h4>
+                <div id="loaderStatus" class="status info">Not Loaded</div>
+                <div id="loaderDetails"></div>
+            </div>
+            <div class="module-status">
+                <h4>Vault Core</h4>
+                <div id="coreStatus" class="status info">Not Loaded</div>
+                <div id="coreDetails"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h3>📊 System Statistics</h3>
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value" id="noteCount">0</div>
+                <div>Total Notes</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="moduleCount">0</div>
+                <div>Loaded Modules</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="eventCount">0</div>
+                <div>Events Fired</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="storageSize">0</div>
+                <div>Storage Size (KB)</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h3>📝 Console Log</h3>
+        <div id="logOutput" class="log-output">System starting...\n</div>
+    </div>
+
+    <script type="module">
+        // Import the EventBus from your existing code
+        class EventBus {
+            constructor() {
+                this.events = {};
+            }
+
+            on(event, callback) {
+                if (!this.events[event]) {
+                    this.events[event] = [];
+                }
+                this.events[event].push(callback);
+            }
+
+            off(event, callback) {
+                if (!this.events[event]) return;
+                this.events[event] = this.events[event].filter(cb => cb !== callback);
+            }
+
+            emit(event, data) {
+                logToOutput(`EVENT: ${event} ${data ? JSON.stringify(data).substring(0, 100) + '...' : ''}`);
+                window.testSystem.eventCount++;
+                
+                if (this.events[event]) {
+                    this.events[event].forEach(callback => callback(data));
+                }
+                
+                // Handle wildcard listeners
+                if (this.events['*']) {
+                    this.events['*'].forEach(callback => callback(event, data));
+                }
+            }
+        }
+
+        // Storage Manager (simplified for inline use)
+        class StorageManager {
+            constructor() {
+                this.version = '1.0.0';
+                this.name = 'storage-manager';
+                this.dependencies = ['core'];
+                this.keys = {
+                    notes: 'vault_notes_v2',
+                    aiMemory: 'vault_ai_memory_v2',
+                    userConfig: 'vault_user_config_v2'
+                };
+                this.cache = new Map();
+                this.initialized = false;
+            }
+
+            async init(core, config = {}) {
+                try {
+                    await this.initializeData();
+                    this.initialized = true;
+                    logToOutput('✅ Storage Manager initialized');
+                    return Promise.resolve();
+                } catch (error) {
+                    logToOutput('❌ Storage Manager failed: ' + error.message);
+                    throw error;
+                }
+            }
+
+            async initializeData() {
+                const existingNotes = await this.load(this.keys.notes);
+                if (!existingNotes) {
+                    await this.save(this.keys.notes, []);
+                }
+
+                const existingAI = await this.load(this.keys.aiMemory);
+                if (!existingAI) {
+                    const defaultAI = {
+                        userVoice: { languagePatterns: {}, emotionalBaseline: {}, writingStyle: {} },
+                        contentAnalysis: { categoryPatterns: {}, interestEvolution: {}, topicCorrelations: {} },
+                        crossInsights: { personalityVsInterests: {}, behaviorPatterns: {}, connectionDiscoveries: [] }
+                    };
+                    await this.save(this.keys.aiMemory, defaultAI);
+                }
+            }
+
+            async save(key, data) {
+                try {
+                    localStorage.setItem(key, JSON.stringify(data));
+                    return true;
+                } catch (error) {
+                    logToOutput('Storage save failed: ' + error.message);
+                    return false;
+                }
+            }
+
+            async load(key) {
+                try {
+                    const data = localStorage.getItem(key);
+                    return data ? JSON.parse(data) : null;
+                } catch (error) {
+                    logToOutput('Storage load failed: ' + error.message);
+                    return null;
+                }
+            }
+
+            async saveNote(noteData) {
+                const notes = await this.loadNotes();
+                if (!noteData.id) {
+                    noteData.id = Date.now().toString();
+                }
+                
+                const now = new Date().toISOString();
+                const note = {
+                    title: '', content: '', isUserCreated: false, category: 'Misc',
+                    tags: [], rating: 0, timestamp: now, lastModified: now,
+                    connections: [], aiInsights: {}, ...noteData
+                };
+
+                const existingIndex = notes.findIndex(n => n.id === note.id);
+                if (existingIndex >= 0) {
+                    notes[existingIndex] = note;
+                } else {
+                    notes.push(note);
+                }
+
+                await this.save(this.keys.notes, notes);
+                return note;
+            }
+
+            async loadNotes() {
+                const notes = await this.load(this.keys.notes);
+                return notes || [];
+            }
+
+            getAPI() {
+                return {
+                    save: this.save.bind(this),
+                    load: this.load.bind(this),
+                    saveNote: this.saveNote.bind(this),
+                    loadNotes: this.loadNotes.bind(this),
+                    getStorageStats: async () => {
+                        const notes = await this.loadNotes();
+                        return {
+                            totalNotes: notes.length,
+                            storageSize: JSON.stringify(notes).length
+                        };
+                    }
+                };
+            }
+
+            handleEvent(eventType, data) {
+                // Handle storage events
+            }
+        }
+
+        // Module Loader (simplified)
+        class ModuleLoader {
+            constructor() {
+                this.version = '1.0.0';
+                this.name = 'module-loader';
+                this.loadedModules = new Map();
+            }
+
+            async init(core, config = {}) {
+                this.core = core;
+                logToOutput('✅ Module Loader initialized');
+                return Promise.resolve();
+            }
+
+            async loadModule(moduleName) {
+                logToOutput(`Loading mock module: ${moduleName}`);
+                
+                // Create mock module
+                const mockModule = {
+                    name: moduleName,
+                    version: '1.0.0',
+                    async init(core, config) {
+                        logToOutput(`✅ Mock module ${moduleName} initialized`);
+                    },
+                    getAPI() { return { getName: () => moduleName }; },
+                    handleEvent(type, data) {}
+                };
+
+                this.loadedModules.set(moduleName, mockModule);
+                return mockModule;
+            }
+
+            getAPI() {
+                return {
+                    loadModule: this.loadModule.bind(this),
+                    getLoadedModules: () => Array.from(this.loadedModules.keys())
+                };
+            }
+
+            handleEvent(eventType, data) {}
+        }
+
+        // Vault Core (simplified)
+        class VaultCore {
+            constructor() {
+                this.version = '2.0.0';
+                this.name = 'vault-core';
+                this.modules = new Map();
+                this.apis = new Map();
+                this.initialized = false;
+            }
+
+            async init(dependencies = {}, config = {}) {
+                try {
+                    this.eventBus = dependencies.eventBus;
+                    this.storageManager = dependencies.storageManager;
+                    this.moduleLoader = dependencies.moduleLoader;
+
+                    if (!this.eventBus || !this.storageManager) {
+                        throw new Error('Missing required dependencies');
+                    }
+
+                    await this.storageManager.init(this, config);
+                    this.setupEventListeners();
+                    this.initialized = true;
+                    
+                    logToOutput('✅ Vault Core initialized');
+                    this.eventBus.emit('core:initialized', { version: this.version });
+                    
+                    return Promise.resolve();
+                } catch (error) {
+                    logToOutput('❌ Vault Core failed: ' + error.message);
+                    throw error;
+                }
+            }
+
+            setupEventListeners() {
+                this.eventBus.on('*', (eventType, data) => {
+                    // Forward events to modules
+                });
+            }
+
+            async registerModule(name, module) {
+                await module.init(this, {});
+                this.modules.set(name, module);
+                const api = module.getAPI();
+                if (api) this.apis.set(name, api);
+                
+                logToOutput(`📦 Module registered: ${name}`);
+                this.eventBus.emit('core:module-registered', { name });
+                return true;
+            }
+
+            async addNote(noteData) {
+                this.eventBus.emit('note:pre-add', noteData);
+                const savedNote = await this.storageManager.saveNote(noteData);
+                this.eventBus.emit('note:added', savedNote);
+                logToOutput(`📝 Note added: ${savedNote.title}`);
+                return savedNote;
+            }
+
+            async searchNotes(params = {}) {
+                const notes = await this.storageManager.loadNotes();
+                let results = notes;
+                
+                if (params.query) {
+                    const query = params.query.toLowerCase();
+                    results = results.filter(note =>
+                        note.title.toLowerCase().includes(query) ||
+                        note.content.toLowerCase().includes(query)
+                    );
+                }
+                
+                this.eventBus.emit('notes:searched', { params, count: results.length });
+                return results;
+            }
+
+            getAPI() {
+                return {
+                    addNote: this.addNote.bind(this),
+                    searchNotes: this.searchNotes.bind(this),
+                    getStats: async () => ({
+                        version: this.version,
+                        initialized: this.initialized,
+                        moduleCount: this.modules.size,
+                        apis: Array.from(this.apis.keys())
+                    })
+                };
+            }
+        }
+
+        // Global test system
+        window.testSystem = {
+            eventBus: null,
+            storageManager: null,
+            moduleLoader: null,
+            vaultCore: null,
+            eventCount: 0,
+            tests: []
+        };
+
+        // Utility functions
+        window.logToOutput = function(message) {
+            const output = document.getElementById('logOutput');
+            const timestamp = new Date().toLocaleTimeString();
+            output.textContent += `[${timestamp}] ${message}\n`;
+            output.scrollTop = output.scrollHeight;
+        }
+
+        window.updateStatus = function(elementId, status, className = 'info', details = '') {
+            const element = document.getElementById(elementId);
+            element.textContent = status;
+            element.className = `status ${className}`;
+            
+            if (details) {
+                const detailsElement = document.getElementById(elementId.replace('Status', 'Details'));
+                if (detailsElement) {
+                    detailsElement.innerHTML = `<small>${details}</small>`;
+                }
+            }
+        }
+
+        window.clearLog = function() {
+            document.getElementById('logOutput').textContent = '';
+            logToOutput('Log cleared');
+        }
+
+        // Test functions
+        window.runTests = async function() {
+            logToOutput('🚀 Starting comprehensive tests...\n');
+            
+            try {
+                // Test 1: Initialize core components
+                await testCoreInitialization();
+                
+                // Test 2: Test storage operations
+                await testStorageOperations();
+                
+                // Test 3: Test module loading
+                await testModuleLoading();
+                
+                // Test 4: Test event system
+                await testEventSystem();
+                
+                // Test 5: Test vault core operations
+                await testVaultOperations();
+                
+                logToOutput('\n✅ All tests completed successfully!');
+                updateStatus('systemStatus', 'All Tests Passed', 'success');
+                
+            } catch (error) {
+                logToOutput(`\n❌ Test failed: ${error.message}`);
+                updateStatus('systemStatus', 'Tests Failed', 'error');
+            }
+            
+            await updateSystemStats();
+        }
+
+        async function testCoreInitialization() {
+            logToOutput('\n--- Test 1: Core Initialization ---');
+            
+            // Initialize EventBus
+            window.testSystem.eventBus = new EventBus();
+            updateStatus('eventBusStatus', 'Initialized', 'success', 'Event system active');
+            
+            // Initialize StorageManager
+            window.testSystem.storageManager = new StorageManager();
+            updateStatus('storageStatus', 'Initialized', 'success', 'Storage layer ready');
+            
+            // Initialize ModuleLoader
+            window.testSystem.moduleLoader = new ModuleLoader();
+            updateStatus('loaderStatus', 'Initialized', 'success', 'Module system ready');
+            
+            // Initialize VaultCore
+            window.testSystem.vaultCore = new VaultCore();
+            await window.testSystem.vaultCore.init({
+                eventBus: window.testSystem.eventBus,
+                storageManager: window.testSystem.storageManager,
+                moduleLoader: window.testSystem.moduleLoader
+            });
+            updateStatus('coreStatus', 'Initialized', 'success', 'Core system active');
+            
+            logToOutput('✅ Core initialization complete');
+        }
+
+        async function testStorageOperations() {
+            logToOutput('\n--- Test 2: Storage Operations ---');
+            
+            const storage = window.testSystem.storageManager;
+            
+            // Test save/load
+            await storage.save('test-key', { message: 'test data' });
+            const loaded = await storage.load('test-key');
+            
+            if (loaded && loaded.message === 'test data') {
+                logToOutput('✅ Storage save/load works');
+            } else {
+                throw new Error('Storage save/load failed');
+            }
+            
+            // Test note operations
+            const testNote = {
+                title: 'Test Note',
+                content: 'This is a test note',
+                category: 'Testing',
+                isUserCreated: true
+            };
+            
+            const savedNote = await storage.saveNote(testNote);
+            const notes = await storage.loadNotes();
+            
+            if (notes.length > 0 && notes[0].title === 'Test Note') {
+                logToOutput('✅ Note storage works');
+            } else {
+                throw new Error('Note storage failed');
+            }
+        }
+
+        async function testModuleLoading() {
+            logToOutput('\n--- Test 3: Module Loading ---');
+            
+            const loader = window.testSystem.moduleLoader;
+            await loader.init(window.testSystem.vaultCore);
+            
+            // Load a mock module
+            const mockModule = await loader.loadModule('test-module');
+            
+            if (mockModule && mockModule.name === 'test-module') {
+                logToOutput('✅ Module loading works');
+            } else {
+                throw new Error('Module loading failed');
+            }
+        }
+
+        async function testEventSystem() {
+            logToOutput('\n--- Test 4: Event System ---');
+            
+            const eventBus = window.testSystem.eventBus;
+            let eventReceived = false;
+            
+            // Test event listening
+            eventBus.on('test-event', (data) => {
+                if (data && data.test === 'success') {
+                    eventReceived = true;
+                }
+            });
+            
+            // Emit test event
+            eventBus.emit('test-event', { test: 'success' });
+            
+            if (eventReceived) {
+                logToOutput('✅ Event system works');
+            } else {
+                throw new Error('Event system failed');
+            }
+        }
+
+        async function testVaultOperations() {
+            logToOutput('\n--- Test 5: Vault Operations ---');
+            
+            const vault = window.testSystem.vaultCore;
+            const api = vault.getAPI();
+            
+            // Test adding a note
+            const newNote = await api.addNote({
+                title: 'Integration Test Note',
+                content: 'Testing vault operations',
+                category: 'Integration'
+            });
+            
+            if (newNote && newNote.id) {
+                logToOutput('✅ Vault add note works');
+            } else {
+                throw new Error('Vault add note failed');
+            }
+            
+            // Test searching notes
+            const searchResults = await api.searchNotes({ query: 'integration' });
+            
+            if (searchResults && searchResults.length > 0) {
+                logToOutput('✅ Vault search works');
+            } else {
+                throw new Error('Vault search failed');
+            }
+        }
+
+        window.showSystemStats = async function() {
+            await updateSystemStats();
+            logToOutput('📊 System stats updated');
+        }
+
+        async function updateSystemStats() {
+            try {
+                const storage = window.testSystem.storageManager;
+                const core = window.testSystem.vaultCore;
+                
+                if (storage) {
+                    const stats = await storage.getAPI().getStorageStats();
+                    document.getElementById('noteCount').textContent = stats.totalNotes || 0;
+                    document.getElementById('storageSize').textContent = 
+                        Math.round((stats.storageSize || 0) / 1024);
+                }
+                
+                if (core) {
+                    const coreStats = await core.getAPI().getStats();
+                    document.getElementById('moduleCount').textContent = coreStats.moduleCount || 0;
+                }
+                
+                document.getElementById('eventCount').textContent = window.testSystem.eventCount;
+                
+            } catch (error) {
+                logToOutput('Error updating stats: ' + error.message);
+            }
+        }
+
+        // Auto-initialize when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            logToOutput('🎯 Personal Vault v2.0 Test System Ready');
+            logToOutput('Click "Run All Tests" to start testing the core modules\n');
+            updateStatus('systemStatus', 'Ready for Testing', 'info');
+        });
+    </script>
+</body>
+</html>
