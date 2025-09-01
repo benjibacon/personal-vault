@@ -1062,8 +1062,88 @@
                 const file = event.target.files[0];
                 if (!file) return;
 
-                // Just show that image was selected - don't prompt yet
-                this.showToast('Image selected - add description when saving', 'info');
+                // Process image and get OCR text
+                const imageData = await this.processImage(file);
+                
+                // Add extracted text to note content if available
+                if (imageData.ocrText) {
+                    const noteContent = document.getElementById('noteContent');
+                    const currentContent = noteContent.value;
+                    
+                    // Apply template if applicable, otherwise use raw text
+                    const formattedText = this.applyTemplate(imageData.ocrText, imageData.fileName);
+                    
+                    noteContent.value = currentContent + (currentContent ? '\n\n' : '') + formattedText;
+                    this.showToast('Text extracted and formatted', 'success');
+                } else {
+                    this.showToast('Image added (no text detected)', 'info');
+                }
+            }
+
+            applyTemplate(ocrText, fileName) {
+                const text = ocrText.toLowerCase();
+                
+                // Recipe template detection
+                if (this.isRecipeContent(text)) {
+                    return this.formatAsRecipe(ocrText, fileName);
+                }
+                
+                // Contact/business card template
+                if (this.isContactContent(text)) {
+                    return this.formatAsContact(ocrText, fileName);
+                }
+                
+                // Document/article template
+                if (this.isDocumentContent(text)) {
+                    return this.formatAsDocument(ocrText, fileName);
+                }
+                
+                // Default: raw text with image reference
+                return `[Image: ${fileName}]\n\n${ocrText}`;
+            }
+
+            isRecipeContent(text) {
+                const recipeKeywords = ['ingredients', 'cups', 'tablespoon', 'teaspoon', 'bake', 'cook', 'oven', 'degrees', 'minutes', 'recipe'];
+                return recipeKeywords.some(keyword => text.includes(keyword));
+            }
+
+            isContactContent(text) {
+                const contactKeywords = ['phone', 'email', 'address', '@', '.com', 'tel:', 'www.'];
+                return contactKeywords.some(keyword => text.includes(keyword));
+            }
+
+            isDocumentContent(text) {
+                // Longer text blocks or formal document indicators
+                return text.length > 200 || text.includes('copyright') || text.includes('article') || text.includes('section');
+            }
+
+            formatAsRecipe(ocrText, fileName) {
+                return `# Recipe from ${fileName}
+
+## Ingredients & Instructions
+${ocrText}
+
+## Notes
+- Extracted from image on ${new Date().toLocaleDateString()}
+- Review and edit as needed`;
+            }
+
+            formatAsContact(ocrText, fileName) {
+                return `# Contact Information
+
+${ocrText}
+
+---
+*Extracted from ${fileName} on ${new Date().toLocaleDateString()}*`;
+            }
+
+            formatAsDocument(ocrText, fileName) {
+                return `# Document: ${fileName}
+
+${ocrText}
+
+---
+*Source: ${fileName} • Extracted: ${new Date().toLocaleDateString()}*`;
             }
 
             deleteNote(id) {
