@@ -57,3 +57,1155 @@
             font-size: 24px;
             font-weight: bold;
             color: #2196F3;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            background: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        .btn:hover {
+            background: #1976D2;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: #666;
+        }
+
+        .btn-secondary:hover {
+            background: #555;
+        }
+
+        .search-box {
+            width: 300px;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+        }
+
+        .search-box:focus {
+            border-color: #2196F3;
+            outline: none;
+        }
+
+        .add-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: #2196F3;
+            color: white;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(33, 150, 243, 0.4);
+            transition: all 0.3s;
+        }
+
+        .add-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 16px rgba(33, 150, 243, 0.6);
+        }
+
+        .notes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .note-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: all 0.3s;
+            border-left: 4px solid #2196F3;
+        }
+
+        .note-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        .note-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .note-content {
+            color: #666;
+            margin-bottom: 15px;
+            line-height: 1.5;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .note-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            color: #999;
+        }
+
+        .category-badge {
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+        }
+
+        .recipes { background: #fff3e0; color: #f57c00; }
+        .coding { background: #e8f5e8; color: #388e3c; }
+        .music { background: #fce4ec; color: #c2185b; }
+        .games { background: #f3e5f5; color: #7b1fa2; }
+        .hobbies { background: #e0f2f1; color: #00695c; }
+        .learning { background: #fff8e1; color: #f9a825; }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+
+        .modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-title {
+            font-size: 24px;
+            color: #333;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #999;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #555;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+            font-family: inherit;
+        }
+
+        .form-group textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            border-color: #2196F3;
+            outline: none;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+
+        .voice-controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .voice-btn {
+            padding: 8px 16px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .voice-btn.recording {
+            background: #f44336;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 6px;
+            color: white;
+            font-weight: 500;
+            z-index: 2000;
+            transform: translateX(100%);
+            transition: transform 0.3s;
+        }
+
+        .toast.show {
+            transform: translateX(0);
+        }
+
+        .toast.success { background: #4CAF50; }
+        .toast.error { background: #f44336; }
+        .toast.info { background: #2196F3; }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+
+        /* AI Enhancement Styles */
+        .ai-analysis {
+            background: #f0f7ff;
+            border: 1px solid #2196F3;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+
+        .ai-suggestions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 10px 0;
+        }
+
+        .ai-suggestion {
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .ai-suggestion:hover {
+            background: #1976d2;
+            color: white;
+        }
+
+        .confidence-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-left: 8px;
+        }
+
+        .confidence-high { background: #4CAF50; }
+        .confidence-medium { background: #FF9800; }
+        .confidence-low { background: #f44336; }
+
+        .feedback-section {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border-left: 4px solid #2196F3;
+        }
+
+        .feedback-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+            align-items: center;
+        }
+
+        .feedback-btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+
+        .feedback-btn.good {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .feedback-btn.bad {
+            background: #f44336;
+            color: white;
+        }
+
+        .user-content-toggle {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 15px 0;
+            padding: 10px;
+            background: #f0f7ff;
+            border-radius: 6px;
+        }
+
+        .toggle-checkbox {
+            width: 18px;
+            height: 18px;
+        }
+
+        .ai-reasoning {
+            font-size: 12px;
+            color: #666;
+            font-style: italic;
+            margin-top: 5px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .search-box {
+                width: 100%;
+                max-width: 300px;
+            }
+            
+            .notes-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Personal Vault</h1>
+            <p>Your AI-powered knowledge repository with smart content analysis</p>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number" id="totalNotes">0</div>
+                <div>Total Notes</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="totalCategories">7</div>
+                <div>Categories</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="aiAccuracy">0</div>
+                <div>AI Accuracy</div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <input type="text" id="searchInput" class="search-box" placeholder="Search notes...">
+            <select id="categoryFilter" class="btn btn-secondary">
+                <option value="">All Categories</option>
+                <option value="Recipes">Recipes</option>
+                <option value="Coding">Coding</option>
+                <option value="Music">Music</option>
+                <option value="Games">Games</option>
+                <option value="Hobbies">Hobbies</option>
+                <option value="Learning">Learning</option>
+                <option value="Misc">Misc</option>
+            </select>
+            <button id="exportBtn" class="btn">Export</button>
+            <button id="aiStatsBtn" class="btn btn-secondary">🤖 AI Stats</button>
+        </div>
+
+        <div id="notesContainer" class="notes-grid">
+            <div class="empty-state">
+                <div class="empty-state-icon">📝</div>
+                <h2>No notes yet</h2>
+                <p>Click the + button to add your first note!</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Note Modal -->
+    <div id="addModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Add Note</h2>
+                <button id="closeModal" class="close-btn">&times;</button>
+            </div>
+
+            <!-- User Content Toggle -->
+            <div class="user-content-toggle">
+                <input type="checkbox" id="isUserContent" class="toggle-checkbox">
+                <label for="isUserContent">I created this content (trains personal AI)</label>
+            </div>
+            
+            <div class="form-group">
+                <label for="noteTitle">Title</label>
+                <input type="text" id="noteTitle" placeholder="Enter note title...">
+            </div>
+            
+            <div class="form-group">
+                <label for="noteContent">Content</label>
+                <textarea id="noteContent" placeholder="Write your note here..."></textarea>
+                <div class="voice-controls">
+                    <button id="voiceBtn" class="voice-btn">🎤 Voice</button>
+                </div>
+            </div>
+
+            <!-- AI Analysis Section -->
+            <div id="aiAnalysis" class="ai-analysis" style="display: none;">
+                <h4>🤖 AI Analysis</h4>
+                <div id="categoryPrediction"></div>
+                <div id="tagSuggestions" class="ai-suggestions"></div>
+                <div id="aiReasoning" class="ai-reasoning"></div>
+                
+                <div class="feedback-section">
+                    <label>How accurate is the AI analysis?</label>
+                    <div class="feedback-buttons">
+                        <button class="feedback-btn good" onclick="window.vault.recordAIFeedback('good')">👍 Good</button>
+                        <button class="feedback-btn bad" onclick="window.vault.recordAIFeedback('bad')">👎 Needs Work</button>
+                        <small>Your feedback helps improve the AI</small>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="noteCategory">Category</label>
+                <select id="noteCategory">
+                    <option value="">Auto-detect</option>
+                    <option value="Recipes">Recipes</option>
+                    <option value="Coding">Coding</option>
+                    <option value="Music">Music</option>
+                    <option value="Games">Games</option>
+                    <option value="Hobbies">Hobbies</option>
+                    <option value="Learning">Learning</option>
+                    <option value="Misc">Misc</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="imageInput">Image (optional)</label>
+                <input type="file" id="imageInput" accept="image/*">
+            </div>
+            
+            <div class="modal-actions">
+                <button id="cancelBtn" class="btn btn-secondary">Cancel</button>
+                <button id="saveBtn" class="btn">Save Note</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- View Note Modal -->
+    <div id="viewModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="viewTitle" class="modal-title">Note Title</h2>
+                <button id="closeViewModal" class="close-btn">&times;</button>
+            </div>
+            
+            <div id="viewContent" style="white-space: pre-wrap; line-height: 1.6; font-size: 16px;"></div>
+            
+            <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee;">
+                <div id="viewMeta" style="color: #666; font-size: 14px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Stats Modal -->
+    <div id="aiStatsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">🤖 AI Statistics</h2>
+                <button id="closeAIStatsModal" class="close-btn">&times;</button>
+            </div>
+            <div id="aiStatsContent"></div>
+        </div>
+    </div>
+
+    <!-- Add Button -->
+    <button id="addBtn" class="add-btn">+</button>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast"></div>
+
+    <script>
+        // Text Processor - embedded
+        class TextProcessor {
+            constructor() {
+                this.commonWords = new Set([
+                    'the', 'and', 'for', 'are', 'but', 'not', 'you', 'all', 'can', 'had', 
+                    'her', 'was', 'one', 'our', 'out', 'day', 'get', 'has', 'him', 'his', 
+                    'how', 'its', 'may', 'new', 'now', 'old', 'see', 'two', 'who', 'boy', 
+                    'did', 'end', 'few', 'got', 'man', 'own', 'say', 'she', 'too', 'use',
+                    'this', 'that', 'with', 'have', 'from', 'they', 'know', 'want', 'been',
+                    'good', 'much', 'some', 'time', 'very', 'when', 'come', 'here', 'just',
+                    'like', 'long', 'make', 'many', 'over', 'such', 'take', 'than', 'them',
+                    'well', 'were', 'will', 'would', 'there', 'could', 'other', 'after',
+                    'first', 'never', 'these', 'think', 'where', 'being', 'every', 'great',
+                    'might', 'shall', 'still', 'those', 'under', 'while'
+                ]);
+            }
+
+            generateTags(text, title = '') {
+                const combinedText = `${title} ${text}`.trim();
+                if (!combinedText) return [];
+
+                const words = combinedText.toLowerCase().match(/\b\w{3,}\b/g) || [];
+                const meaningfulWords = words.filter(word => !this.commonWords.has(word));
+                
+                // Count frequency
+                const wordCount = {};
+                meaningfulWords.forEach(word => {
+                    wordCount[word] = (wordCount[word] || 0) + 1;
+                });
+
+                // Return top words
+                return Object.entries(wordCount)
+                    .sort(([,a], [,b]) => b - a)
+                    .slice(0, 5)
+                    .map(([word]) => word);
+            }
+
+            cleanOCRText(text) {
+                if (!text) return '';
+                return text
+                    .replace(/[|┌┐└┘├┤┬┴┼─│]/g, '')
+                    .replace(/\+[-=]+\+/g, '')
+                    .replace(/[-=]{3,}/g, '')
+                    .replace(/\b1(\w)/g, 'I$1')
+                    .replace(/(\w)1(\s|$)/g, '$1l$2')
+                    .replace(/\s{2,}/g, ' ')
+                    .trim();
+            }
+        }
+
+        // Content Classifier - embedded
+        class ContentClassifier {
+            constructor(textProcessor) {
+                this.textProcessor = textProcessor;
+                this.learningData = this.loadLearningData();
+                
+                this.categoryKeywords = {
+                    'Recipes': ['recipe', 'cook', 'bake', 'ingredient', 'oven', 'flour', 'sugar', 'meal'],
+                    'Coding': ['code', 'programming', 'javascript', 'python', 'html', 'css', 'function', 'api'],
+                    'Music': ['music', 'song', 'album', 'artist', 'band', 'guitar', 'piano', 'lyrics'],
+                    'Games': ['game', 'gaming', 'player', 'level', 'score', 'character', 'console'],
+                    'Learning': ['learn', 'study', 'course', 'tutorial', 'education', 'skill', 'knowledge'],
+                    'Hobbies': ['hobby', 'craft', 'art', 'photography', 'garden', 'diy', 'project']
+                };
+            }
+
+            loadLearningData() {
+                return JSON.parse(localStorage.getItem('ai_learning_data') || '{"feedback": [], "accuracy": 0}');
+            }
+
+            saveLearningData() {
+                localStorage.setItem('ai_learning_data', JSON.stringify(this.learningData));
+            }
+
+            classifyContent(title, content) {
+                const text = `${title} ${content}`.toLowerCase();
+                const scores = {};
+                
+                // Score each category
+                for (const [category, keywords] of Object.entries(this.categoryKeywords)) {
+                    scores[category] = 0;
+                    keywords.forEach(keyword => {
+                        const regex = new RegExp(`\\b${keyword}\\b`, 'g');
+                        const matches = text.match(regex);
+                        scores[category] += matches ? matches.length : 0;
+                    });
+                }
+                
+                // Find best match
+                const bestMatch = Object.entries(scores).sort(([,a], [,b]) => b - a)[0];
+                const confidence = bestMatch[1] > 0 ? Math.min(bestMatch[1] * 0.3, 0.9) : 0.1;
+                
+                return {
+                    category: bestMatch[0],
+                    confidence: confidence,
+                    reasoning: bestMatch[1] > 0 ? `Found ${bestMatch[1]} relevant keywords` : 'No specific keywords found'
+                };
+            }
+
+            generateContentTags(title, content, category) {
+                return this.textProcessor.generateTags(content, title);
+            }
+
+            recordFeedback(predicted, actual, rating) {
+                this.learningData.feedback.push({
+                    predicted,
+                    actual, 
+                    rating,
+                    timestamp: Date.now()
+                });
+                
+                // Calculate accuracy
+                const goodFeedback = this.learningData.feedback.filter(f => f.rating === 'good').length;
+                this.learningData.accuracy = this.learningData.feedback.length > 0 ? 
+                    goodFeedback / this.learningData.feedback.length : 0;
+                
+                this.saveLearningData();
+            }
+
+            getAccuracy() {
+                return Math.round(this.learningData.accuracy * 100);
+            }
+
+            getStats() {
+                return {
+                    totalFeedback: this.learningData.feedback.length,
+                    accuracy: this.getAccuracy()
+                };
+            }
+        }
+
+        // Main Application
+        class PersonalVault {
+            constructor() {
+                this.notes = [];
+                this.categories = ['Recipes', 'Coding', 'Music', 'Games', 'Hobbies', 'Learning', 'Misc'];
+                this.isRecording = false;
+                this.currentAnalysis = null;
+                
+                this.textProcessor = new TextProcessor();
+                this.contentClassifier = new ContentClassifier(this.textProcessor);
+                
+                this.init();
+            }
+
+            async init() {
+                this.setupEventListeners();
+                this.loadNotes();
+                this.updateStats();
+            }
+
+            setupEventListeners() {
+                document.getElementById('addBtn').addEventListener('click', () => this.openAddModal());
+                document.getElementById('closeModal').addEventListener('click', () => this.closeAddModal());
+                document.getElementById('closeViewModal').addEventListener('click', () => this.closeViewModal());
+                document.getElementById('closeAIStatsModal').addEventListener('click', () => this.closeAIStatsModal());
+                document.getElementById('saveBtn').addEventListener('click', () => this.saveNote());
+                document.getElementById('cancelBtn').addEventListener('click', () => this.closeAddModal());
+                document.getElementById('aiStatsBtn').addEventListener('click', () => this.showAIStats());
+                
+                document.getElementById('voiceBtn').addEventListener('click', () => this.toggleVoiceRecording());
+                document.getElementById('imageInput').addEventListener('change', (e) => this.handleImageUpload(e));
+                document.getElementById('categoryFilter').addEventListener('change', (e) => this.filterNotes(e.target.value));
+                document.getElementById('searchInput').addEventListener('input', (e) => this.searchNotes(e.target.value));
+                
+                document.getElementById('noteContent').addEventListener('input', () => this.performAIAnalysis());
+                document.getElementById('noteTitle').addEventListener('input', () => this.performAIAnalysis());
+                
+                // Modal click outside to close
+                document.getElementById('addModal').addEventListener('click', (e) => {
+                    if (e.target.id === 'addModal') this.closeAddModal();
+                });
+                document.getElementById('viewModal').addEventListener('click', (e) => {
+                    if (e.target.id === 'viewModal') this.closeViewModal();
+                });
+                document.getElementById('aiStatsModal').addEventListener('click', (e) => {
+                    if (e.target.id === 'aiStatsModal') this.closeAIStatsModal();
+                });
+            }
+
+            openAddModal() {
+                document.getElementById('addModal').classList.add('show');
+                this.resetForm();
+                document.getElementById('noteTitle').focus();
+            }
+
+            resetForm() {
+                document.getElementById('noteTitle').value = '';
+                document.getElementById('noteContent').value = '';
+                document.getElementById('noteCategory').value = '';
+                document.getElementById('imageInput').value = '';
+                document.getElementById('isUserContent').checked = false;
+                document.getElementById('aiAnalysis').style.display = 'none';
+                this.currentAnalysis = null;
+            }
+
+            closeAddModal() {
+                document.getElementById('addModal').classList.remove('show');
+                this.stopVoiceRecording();
+            }
+
+            closeViewModal() {
+                document.getElementById('viewModal').classList.remove('show');
+            }
+
+            closeAIStatsModal() {
+                document.getElementById('aiStatsModal').classList.remove('show');
+            }
+
+            performAIAnalysis() {
+                const title = document.getElementById('noteTitle').value;
+                const content = document.getElementById('noteContent').value;
+                const isUserContent = document.getElementById('isUserContent').checked;
+                
+                if ((!title && !content) || isUserContent) {
+                    document.getElementById('aiAnalysis').style.display = 'none';
+                    return;
+                }
+
+                const classification = this.contentClassifier.classifyContent(title, content);
+                const tags = this.contentClassifier.generateContentTags(title, content, classification.category);
+                
+                this.currentAnalysis = { classification, tags, title, content };
+                this.displayAIAnalysis(classification, tags);
+                document.getElementById('noteCategory').value = classification.category;
+            }
+
+            displayAIAnalysis(classification, tags) {
+                document.getElementById('aiAnalysis').style.display = 'block';
+                
+                const confidenceClass = classification.confidence > 0.7 ? 'confidence-high' : 
+                                       classification.confidence > 0.4 ? 'confidence-medium' : 'confidence-low';
+                
+                document.getElementById('categoryPrediction').innerHTML = `
+                    <strong>Predicted Category:</strong> ${classification.category}
+                    <span class="confidence-indicator ${confidenceClass}" title="Confidence: ${Math.round(classification.confidence * 100)}%"></span>
+                `;
+                
+                const tagContainer = document.getElementById('tagSuggestions');
+                tagContainer.innerHTML = tags.map(tag => 
+                    `<span class="ai-suggestion" onclick="window.vault.addTagToContent('${tag}')">${tag}</span>`
+                ).join('');
+                
+                document.getElementById('aiReasoning').textContent = classification.reasoning;
+            }
+
+            addTagToContent(tag) {
+                const content = document.getElementById('noteContent').value;
+                const tagText = `#${tag}`;
+                
+                if (!content.includes(tagText)) {
+                    document.getElementById('noteContent').value = content + (content ? ' ' : '') + tagText;
+                }
+                
+                this.showToast(`Tag "${tag}" added`, 'success');
+            }
+
+            recordAIFeedback(rating) {
+                if (!this.currentAnalysis) return;
+                
+                const actualCategory = document.getElementById('noteCategory').value;
+                this.contentClassifier.recordFeedback(
+                    this.currentAnalysis.classification.category,
+                    actualCategory,
+                    rating
+                );
+                
+                this.showToast('AI feedback recorded!', 'success');
+                this.updateStats();
+            }
+
+            async saveNote() {
+                try {
+                    const title = document.getElementById('noteTitle').value.trim();
+                    const content = document.getElementById('noteContent').value.trim();
+                    const category = document.getElementById('noteCategory').value;
+                    const imageFile = document.getElementById('imageInput').files[0];
+                    const isUserCreated = document.getElementById('isUserContent').checked;
+
+                    if (!title && !content && !imageFile) {
+                        this.showToast('Please add some content', 'error');
+                        return;
+                    }
+
+                    const note = {
+                        id: Date.now(),
+                        title: title || 'Untitled Note',
+                        content: content,
+                        isUserCreated: isUserCreated,
+                        category: category || 'Misc',
+                        timestamp: new Date().toISOString(),
+                        tags: [],
+                        type: 'text'
+                    };
+
+                    // Generate tags
+                    if (isUserCreated) {
+                        note.tags = this.textProcessor.generateTags(content, title);
+                    } else {
+                        const classification = this.contentClassifier.classifyContent(title, content);
+                        note.tags = this.contentClassifier.generateContentTags(title, content, classification.category);
+                        note.category = category || classification.category;
+                        note.aiAnalysis = classification;
+                    }
+
+                    // Handle image
+                    if (imageFile) {
+                        note.type = 'image';
+                        note.imageData = await this.processImage(imageFile);
+                        
+                        if (note.imageData && note.imageData.ocrText) {
+                            const ocrTags = this.textProcessor.generateTags(note.imageData.ocrText);
+                            note.tags = [...new Set([...note.tags, ...ocrTags])].slice(0, 6);
+                        }
+                    }
+
+                    this.saveNoteToDB(note);
+                    this.loadNotes();
+                    this.closeAddModal();
+                    
+                    const aiType = isUserCreated ? 'Personal AI' : 'Content AI';
+                    this.showToast(`Note saved with ${aiType} analysis!`, 'success');
+                } catch (error) {
+                    console.error('Save error:', error);
+                    this.showToast('Error saving note', 'error');
+                }
+            }
+
+            async processImage(file) {
+                return new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const imageData = {
+                            dataUrl: e.target.result,
+                            fileName: file.name,
+                            fileSize: file.size,
+                            ocrText: null
+                        };
+                        
+                        const userText = prompt('Describe this image or type any text you see:');
+                        if (userText && userText.trim()) {
+                            imageData.ocrText = this.textProcessor.cleanOCRText(userText.trim());
+                        }
+                        
+                        resolve(imageData);
+                    };
+                    reader.readAsDataURL(file);
+                });
+            }
+
+            saveNoteToDB(note) {
+                let notes = JSON.parse(localStorage.getItem('vault_notes')) || [];
+                notes.push(note);
+                localStorage.setItem('vault_notes', JSON.stringify(notes));
+            }
+
+            loadNotes() {
+                const notes = JSON.parse(localStorage.getItem('vault_notes')) || [];
+                this.notes = notes;
+                this.displayNotes(notes);
+                this.updateStats();
+            }
+
+            displayNotes(notes) {
+                const container = document.getElementById('notesContainer');
+                
+                if (notes.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📝</div>
+                            <h2>No notes yet</h2>
+                            <p>Click the + button to add your first note!</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = notes.map(note => {
+                    const aiIndicator = note.isUserCreated ? '👤' : '🤖';
+                    const aiTooltip = note.isUserCreated ? 'Personal content' : 'AI analyzed';
+                    
+                    return `
+                        <div class="note-card" onclick="window.vault.viewNote(${note.id})">
+                            <div class="note-title">
+                                ${note.title} 
+                                <span title="${aiTooltip}">${aiIndicator}</span>
+                            </div>
+                            <div class="note-content">
+                                ${note.type === 'image' && note.imageData ? 
+                                    `<img src="${note.imageData.dataUrl}" alt="Note image" style="max-width: 100%; border-radius: 4px; margin-bottom: 10px;">` : ''}
+                                ${note.content || 'No text content'}
+                            </div>
+                            <div class="note-meta">
+                                <span class="category-badge ${note.category.toLowerCase()}">${note.category}</span>
+                                <small>${new Date(note.timestamp).toLocaleDateString()}</small>
+                                <button onclick="event.stopPropagation(); window.vault.deleteNote(${note.id})" 
+                                    style="background: #f44336; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 12px;">Delete</button>
+                            </div>
+                            ${note.tags.length > 0 ? `<div style="margin-top: 8px; font-size: 11px; color: #999;">Tags: ${note.tags.join(', ')}</div>` : ''}
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            viewNote(id) {
+                const note = this.notes.find(n => n.id === id);
+                if (!note) return;
+
+                document.getElementById('viewTitle').textContent = note.title;
+                
+                const aiIndicator = note.isUserCreated ? '👤 Personal Content' : '🤖 AI Analyzed Content';
+                const analysisInfo = note.aiAnalysis ? 
+                    `<div style="margin-bottom: 10px; padding: 8px; background: #f0f7ff; border-radius: 4px; font-size: 12px;">
+                        ${aiIndicator} • Confidence: ${Math.round((note.aiAnalysis.confidence || 0) * 100)}%
+                    </div>` : '';
+
+                document.getElementById('viewContent').innerHTML = `
+                    ${analysisInfo}
+                    ${note.type === 'image' && note.imageData ? 
+                        `<img src="${note.imageData.dataUrl}" alt="Note image" style="max-width: 100%; border-radius: 8px; margin-bottom: 15px;">` : ''}
+                    ${note.content}
+                `;
+                
+                document.getElementById('viewMeta').innerHTML = `
+                    <div>Category: <span class="category-badge ${note.category.toLowerCase()}">${note.category}</span></div>
+                    <div style="margin-top: 8px;">Created: ${new Date(note.timestamp).toLocaleString()}</div>
+                    ${note.tags.length > 0 ? `<div style="margin-top: 8px;">Tags: ${note.tags.join(', ')}</div>` : ''}
+                `;
+
+                document.getElementById('viewModal').classList.add('show');
+            }
+
+            updateStats() {
+                document.getElementById('totalNotes').textContent = this.notes.length;
+                document.getElementById('aiAccuracy').textContent = `${this.contentClassifier.getAccuracy()}%`;
+            }
+
+            showAIStats() {
+                const stats = this.contentClassifier.getStats();
+                const userNotes = this.notes.filter(n => n.isUserCreated).length;
+                const externalNotes = this.notes.filter(n => !n.isUserCreated).length;
+                
+                const content = `
+                    <div style="margin-bottom: 20px;">
+                        <h4>📊 Content Distribution</h4>
+                        <p><strong>Personal Content:</strong> ${userNotes} notes</p>
+                        <p><strong>External Content:</strong> ${externalNotes} notes</p>
+                    </div>
+                    
+                    <div style="margin-bottom: 20px;">
+                        <h4>🤖 AI Performance</h4>
+                        <p><strong>Classification Accuracy:</strong> ${stats.accuracy}%</p>
+                        <p><strong>Total Feedback:</strong> ${stats.totalFeedback}</p>
+                    </div>
+                    
+                    <div style="margin-bottom: 20px;">
+                        <h4>🎯 Categories</h4>
+                        ${this.getCategoryStats()}
+                    </div>
+                `;
+
+                document.getElementById('aiStatsContent').innerHTML = content;
+                document.getElementById('aiStatsModal').classList.add('show');
+            }
+
+            getCategoryStats() {
+                const counts = {};
+                this.categories.forEach(cat => counts[cat] = 0);
+                
+                this.notes.forEach(note => {
+                    if (counts.hasOwnProperty(note.category)) {
+                        counts[note.category]++;
+                    }
+                });
+                
+                return Object.entries(counts)
+                    .filter(([, count]) => count > 0)
+                    .map(([category, count]) => 
+                        `<div style="display: flex; justify-content: space-between; margin: 5px 0;">
+                            <span class="category-badge ${category.toLowerCase()}">${category}</span>
+                            <span>${count}</span>
+                        </div>`
+                    ).join('');
+            }
+
+            filterNotes(category) {
+                const filtered = category ? 
+                    this.notes.filter(note => note.category === category) : 
+                    this.notes;
+                this.displayNotes(filtered);
+            }
+
+            searchNotes(query) {
+                if (!query) {
+                    this.displayNotes(this.notes);
+                    return;
+                }
+                
+                const results = this.notes.filter(note => 
+                    note.title.toLowerCase().includes(query.toLowerCase()) ||
+                    note.content.toLowerCase().includes(query.toLowerCase()) ||
+                    note.tags.some(tag => tag.toLowerCase().includes(query.toLowerCase()))
+                );
+                
+                this.displayNotes(results);
+            }
+
+            async toggleVoiceRecording() {
+                if (this.isRecording) {
+                    this.stopVoiceRecording();
+                } else {
+                    this.startVoiceRecording();
+                }
+            }
+
+            async startVoiceRecording() {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                
+                if (!SpeechRecognition) {
+                    this.showToast('Voice input not supported', 'error');
+                    return;
+                }
+
+                const recognition = new SpeechRecognition();
+                recognition.continuous = false;
+                recognition.interimResults = false;
+                recognition.lang = 'en-US';
+
+                const voiceBtn = document.getElementById('voiceBtn');
+                voiceBtn.textContent = '🔴 Recording...';
+                voiceBtn.classList.add('recording');
+                this.isRecording = true;
+
+                recognition.onresult = (event) => {
+                    const transcript = event.results[0][0].transcript;
+                    const noteContent = document.getElementById('noteContent');
+                    noteContent.value += (noteContent.value ? ' ' : '') + transcript;
+                    this.performAIAnalysis();
+                };
+
+                recognition.onerror = () => {
+                    this.showToast('Voice recognition error', 'error');
+                    this.stopVoiceRecording();
+                };
+
+                recognition.onend = () => {
+                    this.stopVoiceRecording();
+                };
+
+                recognition.start();
+                this.showToast('Listening...', 'info');
+            }
+
+            stopVoiceRecording() {
+                this.isRecording = false;
+                const voiceBtn = document.getElementById('voiceBtn');
+                voiceBtn.textContent = '🎤 Voice';
+                voiceBtn.classList.remove('recording');
+            }
+
+            async handleImageUpload(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                const imageData = await this.processImage(file);
+                
+                if (imageData.ocrText) {
+                    const noteContent = document.getElementById('noteContent');
+                    const current = noteContent.value;
+                    const extracted = `[Image: ${file.name}]\nExtracted text: ${imageData.ocrText}`;
+                    noteContent.value = current + (current ? '\n\n' : '') + extracted;
+                    this.performAIAnalysis();
+                }
+            }
+
+            deleteNote(id) {
+                let notes = JSON.parse(localStorage.getItem('vault_notes')) || [];
+                notes = notes.filter(note => note.id !== id);
+                localStorage.setItem('vault_notes', JSON.stringify(notes));
+                this.loadNotes();
+                this.showToast('Note deleted', 'success');
+            }
+
+            showToast(message, type = 'info') {
+                const toast = document.getElementById('toast');
+                toast.textContent = message;
+                toast.className = `toast show ${type}`;
+                
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                    setTimeout(() => {
+                        toast.className = 'toast';
+                    }, 300);
+                }, 3000);
+            }
+        }
+
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', () => {
+            window.vault = new PersonalVault();
+        });
+    </script>
+</body>
+</html>
