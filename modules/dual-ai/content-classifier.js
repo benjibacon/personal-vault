@@ -1,5 +1,5 @@
 /**
- * Content Classifier AI Module
+ * Content Classifier AI Module - FIXED VERSION
  * Analyzes external content for categorization and topic extraction
  * Part of Dual AI system - handles content NOT created by user
  */
@@ -7,7 +7,7 @@
 class ContentClassifier {
     constructor() {
         this.name = 'content-classifier';
-        this.version = '1.0.0';
+        this.version = '1.0.1';
         this.dependencies = ['core', 'storage-manager'];
         
         // AI learning patterns for external content
@@ -32,6 +32,35 @@ class ContentClassifier {
     }
 
     /**
+     * Get module API for other modules
+     */
+    getAPI() {
+        return {
+            analyzeContent: this.analyzeContent.bind(this),
+            classifyCategory: this.classifyCategory.bind(this),
+            extractTags: this.extractTags.bind(this),
+            assessImportance: this.assessImportance.bind(this),
+            getStats: this.getStats.bind(this)
+        };
+    }
+
+    /**
+     * Handle events from event bus
+     */
+    handleEvent(eventType, data) {
+        switch (eventType) {
+            case 'note-created':
+                this.handleNoteCreated(data);
+                break;
+            case 'feedback-received':
+                this.handleFeedback(data);
+                break;
+        }
+    }
+}
+
+// Export for module system
+export { ContentClassifier };
      * Initialize the content classifier
      */
     async init(core, config) {
@@ -58,39 +87,102 @@ class ContentClassifier {
     }
 
     /**
-     * Get default category keywords for content classification
+     * Get default category keywords - FIXED to match main app categories
      */
     getDefaultCategoryKeywords() {
         return {
             'Recipes': {
-                keywords: ['recipe', 'cook', 'bake', 'ingredient', 'cup', 'tablespoon', 'oven', 'flour', 'sugar', 'salt', 'pepper', 'chicken', 'beef', 'pasta', 'sauce', 'meal', 'dinner', 'lunch', 'breakfast', 'food', 'cooking', 'kitchen', 'chef', 'culinary'],
-                weight: 1.0
+                keywords: ['recipe', 'cook', 'bake', 'ingredient', 'cup', 'tablespoon', 'oven', 'flour', 'sugar', 'salt', 'pepper', 'chicken', 'beef', 'pasta', 'sauce', 'meal', 'dinner', 'lunch', 'breakfast', 'food', 'cooking', 'kitchen', 'chef', 'culinary', 'cookies', 'oatmeal'],
+                weight: 1.0,
+                priority: 1
             },
-            'Technology': {
-                keywords: ['tech', 'software', 'programming', 'code', 'javascript', 'python', 'html', 'css', 'api', 'database', 'server', 'cloud', 'ai', 'machine learning', 'algorithm', 'development', 'framework', 'library', 'github', 'stackoverflow'],
-                weight: 1.0
+            'Coding': {
+                keywords: ['code', 'programming', 'javascript', 'python', 'html', 'css', 'function', 'variable', 'array', 'object', 'debug', 'api', 'database', 'server', 'client', 'git', 'github', 'algorithm', 'software', 'development', 'framework', 'library'],
+                weight: 1.0,
+                priority: 1
+            },
+            'Music': {
+                keywords: ['music', 'song', 'guitar', 'piano', 'drum', 'chord', 'melody', 'rhythm', 'album', 'artist', 'concert', 'band', 'lyrics', 'note', 'scale', 'instrument', 'composition', 'performance'],
+                weight: 1.0,
+                priority: 1
+            },
+            'Games': {
+                keywords: ['game', 'gaming', 'play', 'player', 'level', 'score', 'quest', 'character', 'strategy', 'puzzle', 'arcade', 'console', 'pc', 'mobile', 'video game', 'board game', 'rpg', 'mmorpg'],
+                weight: 1.0,
+                priority: 1
+            },
+            'Hobbies': {
+                keywords: ['hobby', 'craft', 'art', 'draw', 'paint', 'photography', 'garden', 'collect', 'build', 'make', 'create', 'diy', 'project', 'woodworking', 'knitting', 'sewing'],
+                weight: 1.0,
+                priority: 1
             },
             'Learning': {
                 keywords: ['learn', 'study', 'course', 'tutorial', 'lesson', 'education', 'knowledge', 'skill', 'practice', 'training', 'research', 'book', 'article', 'university', 'academic', 'certification', 'mooc', 'workshop'],
-                weight: 1.0
+                weight: 1.0,
+                priority: 1
             },
-            'Business': {
-                keywords: ['business', 'startup', 'entrepreneur', 'marketing', 'strategy', 'finance', 'investment', 'revenue', 'profit', 'management', 'leadership', 'team', 'project', 'planning', 'analysis', 'growth'],
-                weight: 1.0
-            },
-            'Health': {
-                keywords: ['health', 'fitness', 'exercise', 'nutrition', 'diet', 'wellness', 'medical', 'doctor', 'therapy', 'mental health', 'psychology', 'medicine', 'treatment', 'diagnosis', 'symptoms'],
-                weight: 1.0
-            },
-            'Entertainment': {
-                keywords: ['movie', 'film', 'music', 'game', 'gaming', 'book', 'novel', 'tv show', 'series', 'podcast', 'youtube', 'streaming', 'entertainment', 'celebrity', 'review', 'recommendation'],
-                weight: 1.0
-            },
-            'Science': {
-                keywords: ['science', 'research', 'study', 'experiment', 'data', 'analysis', 'theory', 'discovery', 'innovation', 'technology', 'physics', 'chemistry', 'biology', 'psychology', 'neuroscience'],
-                weight: 1.0
+            'Misc': {
+                keywords: ['general', 'other', 'miscellaneous', 'various', 'random', 'note', 'idea', 'thought', 'reminder'],
+                weight: 0.5,
+                priority: 0
             }
         };
+    }
+
+    /**
+     * Classify content into categories - FIXED LOGIC
+     */
+    classifyCategory(text, sourceUrl = '') {
+        let scores = {};
+        
+        // Initialize scores for all categories
+        Object.keys(this.patterns.categoryKeywords).forEach(category => {
+            scores[category] = 0;
+        });
+
+        // Score based on keywords with improved matching
+        for (const [category, data] of Object.entries(this.patterns.categoryKeywords)) {
+            let categoryScore = 0;
+            
+            data.keywords.forEach(keyword => {
+                // Use word boundary regex for exact matches
+                const regex = new RegExp(`\\b${keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi');
+                const matches = (text.match(regex) || []).length;
+                if (matches > 0) {
+                    // Add bonus for exact keyword matches
+                    categoryScore += matches * data.weight * (data.priority === 1 ? 2 : 1);
+                    console.log(`[ContentClassifier] Found "${keyword}" in category "${category}", score: +${matches * data.weight}`);
+                }
+            });
+            
+            scores[category] = categoryScore;
+        }
+
+        // Apply source URL bonus
+        if (sourceUrl) {
+            this.applySourceBonus(scores, sourceUrl);
+        }
+
+        // Apply learned patterns
+        this.applyLearnedPatterns(scores, text);
+
+        // Find best category with minimum threshold
+        const sortedCategories = Object.entries(scores)
+            .sort(([,a], [,b]) => b - a);
+        
+        console.log('[ContentClassifier] Category scores:', scores);
+        
+        const bestCategory = sortedCategories[0];
+        const secondBest = sortedCategories[1];
+        
+        // Return best category if it has a clear lead, otherwise default to Misc
+        if (bestCategory[1] > 0 && (bestCategory[1] > secondBest[1] * 1.2 || bestCategory[1] >= 2)) {
+            console.log(`[ContentClassifier] Selected category: ${bestCategory[0]} (score: ${bestCategory[1]})`);
+            return bestCategory[0];
+        }
+        
+        console.log('[ContentClassifier] No clear category winner, defaulting to Misc');
+        return 'Misc';
     }
 
     /**
@@ -110,6 +202,9 @@ class ContentClassifier {
         }
 
         const fullText = `${title} ${content}`.toLowerCase();
+        console.log(`[ContentClassifier] Analyzing content: "${title}" (${content.length} chars)`);
+        console.log(`[ContentClassifier] Full text preview: ${fullText.substring(0, 200)}...`);
+        
         const analysis = {
             category: this.classifyCategory(fullText, sourceUrl),
             tags: this.extractTags(fullText, title),
@@ -132,6 +227,8 @@ class ContentClassifier {
             importance: this.calculateImportanceConfidence(analysis.importance, contentData)
         };
 
+        console.log(`[ContentClassifier] Final analysis:`, analysis);
+
         // Learn from this analysis
         this.learnFromContent(contentData, analysis);
         
@@ -142,75 +239,41 @@ class ContentClassifier {
     }
 
     /**
-     * Classify content into categories
-     */
-    classifyCategory(text, sourceUrl = '') {
-        let scores = {};
-        
-        // Initialize scores
-        Object.keys(this.patterns.categoryKeywords).forEach(category => {
-            scores[category] = 0;
-        });
-
-        // Score based on keywords
-        for (const [category, data] of Object.entries(this.patterns.categoryKeywords)) {
-            let categoryScore = 0;
-            
-            data.keywords.forEach(keyword => {
-                const regex = new RegExp(`\\b${keyword}\\b`, 'gi');
-                const matches = (text.match(regex) || []).length;
-                categoryScore += matches * data.weight;
-            });
-            
-            scores[category] = categoryScore;
-        }
-
-        // Apply source URL bonus
-        if (sourceUrl) {
-            this.applySourceBonus(scores, sourceUrl);
-        }
-
-        // Apply learned patterns
-        this.applyLearnedPatterns(scores, text);
-
-        // Find best category
-        const bestCategory = Object.entries(scores)
-            .sort(([,a], [,b]) => b - a)[0];
-
-        return bestCategory[1] > 0 ? bestCategory[0] : 'General';
-    }
-
-    /**
      * Extract relevant tags from content
      */
     extractTags(text, title) {
         const words = text.match(/\b\w{3,15}\b/g) || [];
         const titleWords = title.toLowerCase().match(/\b\w{3,15}\b/g) || [];
         
-        // Common stop words to exclude
-        const stopWords = new Set(['the', 'and', 'for', 'are', 'but', 'not', 'you', 'all', 'can', 'had', 'her', 'was', 'one', 'our', 'out', 'day', 'get', 'has', 'him', 'his', 'how', 'its', 'may', 'new', 'now', 'old', 'see', 'two', 'who', 'boy', 'did', 'end', 'few', 'got', 'man', 'own', 'say', 'she', 'too', 'use', 'very', 'what', 'with', 'have', 'from', 'they', 'know', 'want', 'been', 'good', 'much', 'some', 'time', 'will', 'come', 'could', 'first', 'would', 'there', 'think', 'where', 'being', 'every', 'great', 'might', 'shall', 'still', 'those', 'under', 'while']);
+        // Enhanced stop words list
+        const stopWords = new Set(['the', 'and', 'for', 'are', 'but', 'not', 'you', 'all', 'can', 'had', 'her', 'was', 'one', 'our', 'out', 'day', 'get', 'has', 'him', 'his', 'how', 'its', 'may', 'new', 'now', 'old', 'see', 'two', 'who', 'boy', 'did', 'end', 'few', 'got', 'man', 'own', 'say', 'she', 'too', 'use', 'very', 'what', 'with', 'have', 'from', 'they', 'know', 'want', 'been', 'good', 'much', 'some', 'time', 'will', 'come', 'could', 'first', 'would', 'there', 'think', 'where', 'being', 'every', 'great', 'might', 'shall', 'still', 'those', 'under', 'while', 'this', 'that', 'than', 'more', 'into', 'over', 'down', 'only', 'just', 'also', 'both', 'back', 'most', 'each', 'such', 'make', 'find', 'take', 'give', 'work', 'look', 'help', 'show', 'tell', 'keep', 'part', 'need', 'feel', 'seem', 'talk', 'turn', 'move', 'like', 'well']);
 
         // Count word frequencies
         const wordFreq = {};
         words.forEach(word => {
-            const cleanWord = word.toLowerCase();
-            if (!stopWords.has(cleanWord) && cleanWord.length >= 3) {
+            const cleanWord = word.toLowerCase().trim();
+            if (!stopWords.has(cleanWord) && cleanWord.length >= 3 && cleanWord.length <= 15) {
                 wordFreq[cleanWord] = (wordFreq[cleanWord] || 0) + 1;
             }
         });
 
-        // Boost title words
+        // Boost title words significantly
         titleWords.forEach(word => {
-            if (wordFreq[word]) {
-                wordFreq[word] *= 2;
+            const cleanWord = word.toLowerCase().trim();
+            if (wordFreq[cleanWord] && !stopWords.has(cleanWord)) {
+                wordFreq[cleanWord] *= 3; // Higher boost for title words
             }
         });
 
-        // Select top tags
+        // Select top tags with better filtering
         const tags = Object.entries(wordFreq)
             .sort(([,a], [,b]) => b - a)
-            .slice(0, 6)
-            .filter(([word, freq]) => freq >= 2 || titleWords.includes(word))
+            .slice(0, 8) // Get more candidates
+            .filter(([word, freq]) => {
+                // More selective filtering
+                return (freq >= 2) || (titleWords.includes(word) && freq >= 1);
+            })
+            .slice(0, 5) // Then limit to 5 best
             .map(([word]) => word);
 
         return this.refineTagsWithLearning(tags, text);
@@ -231,10 +294,12 @@ class ContentClassifier {
         // Content length bonus
         if (content.length > 2000) {
             importance += 0.5;
+        } else if (content.length < 200) {
+            importance -= 0.5;
         }
         
         // Source reliability bonus
-        if (this.patterns.sourceReliability.has(sourceUrl)) {
+        if (sourceUrl && this.patterns.sourceReliability.has(sourceUrl)) {
             const reliability = this.patterns.sourceReliability.get(sourceUrl);
             importance += reliability - 3; // Adjust based on learned source quality
         }
@@ -253,7 +318,6 @@ class ContentClassifier {
      * Extract main topics from content
      */
     extractTopics(text) {
-        // Simple topic extraction based on noun phrases and key terms
         const topics = [];
         
         // Look for capitalized terms (potential proper nouns)
@@ -262,9 +326,15 @@ class ContentClassifier {
         // Look for technical terms or concepts
         const technicalTerms = text.match(/\b\w+(?:[-_]\w+)+\b/g) || [];
         
+        // Look for quoted terms
+        const quotedTerms = text.match(/"([^"]+)"/g) || [];
+        
         // Combine and filter
-        const allTopics = [...new Set([...properNouns, ...technicalTerms])]
-            .slice(0, 5);
+        const allTopics = [...new Set([
+            ...properNouns.slice(0, 3),
+            ...technicalTerms.slice(0, 2),
+            ...quotedTerms.map(q => q.replace(/"/g, '')).slice(0, 2)
+        ])].slice(0, 5);
             
         return allTopics;
     }
@@ -273,8 +343,8 @@ class ContentClassifier {
      * Analyze sentiment of content
      */
     analyzeSentiment(text) {
-        const positiveWords = ['good', 'great', 'excellent', 'amazing', 'wonderful', 'fantastic', 'love', 'best', 'awesome', 'perfect'];
-        const negativeWords = ['bad', 'terrible', 'awful', 'hate', 'worst', 'horrible', 'disappointing', 'frustrating', 'annoying'];
+        const positiveWords = ['good', 'great', 'excellent', 'amazing', 'wonderful', 'fantastic', 'love', 'best', 'awesome', 'perfect', 'outstanding', 'brilliant', 'superb'];
+        const negativeWords = ['bad', 'terrible', 'awful', 'hate', 'worst', 'horrible', 'disappointing', 'frustrating', 'annoying', 'poor', 'useless', 'broken'];
         
         let positiveCount = 0;
         let negativeCount = 0;
@@ -289,8 +359,9 @@ class ContentClassifier {
             negativeCount += matches;
         });
         
-        if (positiveCount > negativeCount) return 'positive';
-        if (negativeCount > positiveCount) return 'negative';
+        const threshold = 2;
+        if (positiveCount >= threshold && positiveCount > negativeCount) return 'positive';
+        if (negativeCount >= threshold && negativeCount > positiveCount) return 'negative';
         return 'neutral';
     }
 
@@ -309,22 +380,30 @@ class ContentClassifier {
     applySourceBonus(scores, sourceUrl) {
         const domain = this.extractDomain(sourceUrl);
         
-        // Domain-based category hints
+        // Domain-based category hints with stronger signals
         const domainHints = {
-            'github.com': 'Technology',
-            'stackoverflow.com': 'Technology',
-            'medium.com': 'Learning',
-            'youtube.com': 'Entertainment',
-            'wikipedia.org': 'Learning',
-            'reddit.com': 'General',
-            'news.ycombinator.com': 'Technology',
-            'techcrunch.com': 'Technology',
-            'allrecipes.com': 'Recipes',
-            'foodnetwork.com': 'Recipes'
+            'github.com': { 'Coding': 3 },
+            'stackoverflow.com': { 'Coding': 4 },
+            'codepen.io': { 'Coding': 3 },
+            'medium.com': { 'Learning': 2 },
+            'youtube.com': { 'Music': 2, 'Learning': 1 },
+            'spotify.com': { 'Music': 4 },
+            'wikipedia.org': { 'Learning': 2 },
+            'reddit.com': { 'Misc': 1 },
+            'news.ycombinator.com': { 'Coding': 2, 'Learning': 1 },
+            'techcrunch.com': { 'Coding': 2 },
+            'allrecipes.com': { 'Recipes': 4 },
+            'foodnetwork.com': { 'Recipes': 4 },
+            'steam.com': { 'Games': 4 },
+            'gamespot.com': { 'Games': 3 },
+            'ign.com': { 'Games': 3 }
         };
         
         if (domainHints[domain]) {
-            scores[domainHints[domain]] += 2;
+            Object.entries(domainHints[domain]).forEach(([category, bonus]) => {
+                scores[category] = (scores[category] || 0) + bonus;
+                console.log(`[ContentClassifier] Applied domain bonus: ${domain} -> ${category} +${bonus}`);
+            });
         }
     }
 
@@ -334,7 +413,7 @@ class ContentClassifier {
     applyLearnedPatterns(scores, text) {
         // Apply topic associations from AI memory
         for (const [topic, categoryData] of this.patterns.topicAssociations) {
-            if (text.includes(topic)) {
+            if (text.includes(topic.toLowerCase())) {
                 for (const [category, weight] of Object.entries(categoryData)) {
                     scores[category] = (scores[category] || 0) + weight;
                 }
@@ -349,14 +428,16 @@ class ContentClassifier {
         // Filter out tags that received negative feedback
         const refinedTags = tags.filter(tag => {
             const pattern = this.patterns.contentPatterns.get(tag);
-            return !pattern || pattern.negativeCount < pattern.positiveCount;
+            return !pattern || (pattern.negativeCount < pattern.positiveCount);
         });
         
         // Add high-confidence learned tags
         for (const [tag, pattern] of this.patterns.contentPatterns) {
-            if (pattern.confidence > 0.8 && text.includes(pattern.trigger) && !refinedTags.includes(tag)) {
+            if (pattern.confidence > 0.8 && 
+                text.includes(pattern.trigger) && 
+                !refinedTags.includes(tag) && 
+                refinedTags.length < 5) {
                 refinedTags.push(tag);
-                if (refinedTags.length >= 6) break;
             }
         }
         
@@ -374,10 +455,12 @@ class ContentClassifier {
         let totalKeywords = categoryData.keywords.length;
         
         categoryData.keywords.forEach(keyword => {
-            if (text.includes(keyword)) matchCount++;
+            const regex = new RegExp(`\\b${keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi');
+            if (text.match(regex)) matchCount++;
         });
         
-        return Math.min(0.95, Math.max(0.1, matchCount / totalKeywords * 3));
+        const baseConfidence = matchCount / totalKeywords;
+        return Math.min(0.95, Math.max(0.1, baseConfidence * 2));
     }
 
     /**
@@ -390,11 +473,11 @@ class ContentClassifier {
         tags.forEach(tag => {
             const pattern = this.patterns.contentPatterns.get(tag);
             const baseConfidence = pattern ? pattern.confidence : 0.6;
-            const contextBonus = text.split(tag).length - 1 > 1 ? 0.2 : 0;
-            totalConfidence += baseConfidence + contextBonus;
+            const contextBonus = (text.split(tag).length - 1) > 1 ? 0.2 : 0;
+            totalConfidence += Math.min(0.95, baseConfidence + contextBonus);
         });
         
-        return Math.min(0.95, totalConfidence / tags.length);
+        return totalConfidence / tags.length;
     }
 
     /**
@@ -408,6 +491,10 @@ class ContentClassifier {
         }
         
         if (contentData.content && contentData.content.length > 500) {
+            confidence += 0.1;
+        }
+        
+        if (contentData.title && contentData.title.length > 10) {
             confidence += 0.1;
         }
         
@@ -448,8 +535,9 @@ class ContentClassifier {
         
         // Learn source reliability (will be updated with user feedback)
         if (sourceUrl) {
-            if (!this.patterns.sourceReliability.has(sourceUrl)) {
-                this.patterns.sourceReliability.set(sourceUrl, 3); // Default reliability
+            const domain = this.extractDomain(sourceUrl);
+            if (!this.patterns.sourceReliability.has(domain)) {
+                this.patterns.sourceReliability.set(domain, 3); // Default reliability
             }
         }
         
@@ -479,25 +567,31 @@ class ContentClassifier {
     learnFromCategoryCorrection(data) {
         const { predictedCategory, actualCategory, content, confidence } = data;
         
+        console.log(`[ContentClassifier] Learning from correction: ${predictedCategory} -> ${actualCategory}`);
+        
         // Reduce confidence in incorrect prediction
         if (predictedCategory !== actualCategory && this.patterns.categoryKeywords[predictedCategory]) {
-            this.patterns.categoryKeywords[predictedCategory].weight *= 0.95;
+            this.patterns.categoryKeywords[predictedCategory].weight = 
+                Math.max(0.3, this.patterns.categoryKeywords[predictedCategory].weight * 0.9);
         }
         
         // Increase confidence in correct category
         if (this.patterns.categoryKeywords[actualCategory]) {
-            this.patterns.categoryKeywords[actualCategory].weight *= 1.05;
-            this.patterns.categoryKeywords[actualCategory].weight = Math.min(2.0, this.patterns.categoryKeywords[actualCategory].weight);
+            this.patterns.categoryKeywords[actualCategory].weight = 
+                Math.min(2.0, this.patterns.categoryKeywords[actualCategory].weight * 1.1);
         }
         
         // Learn new keywords for the actual category
         if (content) {
             const words = content.toLowerCase().match(/\b\w{4,12}\b/g) || [];
-            const uniqueWords = [...new Set(words)].slice(0, 3);
+            const uniqueWords = [...new Set(words)]
+                .filter(word => word.length >= 4 && word.length <= 12)
+                .slice(0, 3);
             
             uniqueWords.forEach(word => {
                 if (!this.patterns.categoryKeywords[actualCategory].keywords.includes(word)) {
                     this.patterns.categoryKeywords[actualCategory].keywords.push(word);
+                    console.log(`[ContentClassifier] Learned new keyword "${word}" for category "${actualCategory}"`);
                 }
             });
         }
@@ -536,11 +630,14 @@ class ContentClassifier {
     learnFromImportanceRating(data) {
         const { sourceUrl, predictedImportance, actualRating } = data;
         
-        if (sourceUrl && this.patterns.sourceReliability.has(sourceUrl)) {
-            const currentReliability = this.patterns.sourceReliability.get(sourceUrl);
-            const adjustment = (actualRating - predictedImportance) * 0.1;
-            const newReliability = Math.max(1, Math.min(5, currentReliability + adjustment));
-            this.patterns.sourceReliability.set(sourceUrl, newReliability);
+        if (sourceUrl) {
+            const domain = this.extractDomain(sourceUrl);
+            if (this.patterns.sourceReliability.has(domain)) {
+                const currentReliability = this.patterns.sourceReliability.get(domain);
+                const adjustment = (actualRating - predictedImportance) * 0.1;
+                const newReliability = Math.max(1, Math.min(5, currentReliability + adjustment));
+                this.patterns.sourceReliability.set(domain, newReliability);
+            }
         }
     }
 
@@ -552,7 +649,10 @@ class ContentClassifier {
         if (this.aiMemory.categoryPatterns) {
             Object.entries(this.aiMemory.categoryPatterns).forEach(([category, data]) => {
                 if (this.patterns.categoryKeywords[category]) {
-                    this.patterns.categoryKeywords[category] = { ...this.patterns.categoryKeywords[category], ...data };
+                    this.patterns.categoryKeywords[category] = { 
+                        ...this.patterns.categoryKeywords[category], 
+                        ...data 
+                    };
                 }
             });
         }
@@ -578,7 +678,8 @@ class ContentClassifier {
         // Store topic correlations
         analysis.topics.forEach(topic => {
             if (this.patterns.topicAssociations.has(topic)) {
-                this.aiMemory.topicCorrelations[topic] = Object.fromEntries(this.patterns.topicAssociations.get(topic));
+                this.aiMemory.topicCorrelations[topic] = 
+                    Object.fromEntries(this.patterns.topicAssociations.get(topic));
             }
         });
         
@@ -649,32 +750,3 @@ class ContentClassifier {
     }
 
     /**
-     * Get module API for other modules
-     */
-    getAPI() {
-        return {
-            analyzeContent: this.analyzeContent.bind(this),
-            classifyCategory: this.classifyCategory.bind(this),
-            extractTags: this.extractTags.bind(this),
-            assessImportance: this.assessImportance.bind(this),
-            getStats: this.getStats.bind(this)
-        };
-    }
-
-    /**
-     * Handle events from event bus
-     */
-    handleEvent(eventType, data) {
-        switch (eventType) {
-            case 'note-created':
-                this.handleNoteCreated(data);
-                break;
-            case 'feedback-received':
-                this.handleFeedback(data);
-                break;
-        }
-    }
-}
-
-// Export for module system
-export { ContentClassifier };
