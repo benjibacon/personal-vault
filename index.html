@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Personal Vault v2.0</title>
+    <title>Personal Vault</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#2196F3">
     <style>
@@ -18,107 +18,9 @@
             background: #f5f7fa;
             color: #333;
             line-height: 1.6;
-            min-height: 100vh;
         }
 
-        .loading-screen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: #1a1a1a;
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-direction: column;
-            z-index: 10000;
-        }
-
-        .loading-spinner {
-            width: 50px;
-            height: 50px;
-            border: 3px solid #333;
-            border-top: 3px solid #2196F3;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-bottom: 20px;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .loading-text {
-            font-size: 16px;
-            opacity: 0.8;
-        }
-
-        .error-screen {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: #1a1a1a;
-            color: white;
-            padding: 20px;
-            z-index: 10000;
-        }
-
-        .error-content {
-            max-width: 600px;
-            margin: 0 auto;
-            padding-top: 50px;
-        }
-
-        .error-title {
-            color: #f44336;
-            font-size: 24px;
-            margin-bottom: 20px;
-        }
-
-        .error-message {
-            background: #333;
-            padding: 15px;
-            border-radius: 8px;
-            margin: 15px 0;
-            font-family: monospace;
-            white-space: pre-wrap;
-        }
-
-        .error-actions {
-            margin-top: 30px;
-        }
-
-        .btn {
-            padding: 10px 20px;
-            background: #2196F3;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 14px;
-            margin-right: 10px;
-        }
-
-        .btn:hover {
-            background: #1976D2;
-        }
-
-        .btn-danger {
-            background: #f44336;
-        }
-
-        .btn-danger:hover {
-            background: #d32f2f;
-        }
-
-        .app-container {
-            display: none;
+        .container {
             max-width: 1200px;
             margin: 0 auto;
             padding: 20px;
@@ -134,50 +36,27 @@
             margin-bottom: 10px;
         }
 
-        .header .version {
-            color: #666;
-            font-size: 14px;
-        }
-
-        .module-status {
-            background: white;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 30px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-
-        .module-list {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-        }
-
-        .module-item {
-            padding: 12px;
-            border-radius: 8px;
+        .stats {
             display: flex;
-            align-items: center;
-            justify-content: space-between;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
         }
 
-        .module-loaded {
-            background: #e8f5e8;
-            color: #2e7d32;
+        .stat-card {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            min-width: 120px;
         }
 
-        .module-error {
-            background: #ffebee;
-            color: #c62828;
-        }
-
-        .module-pending {
-            background: #fff3e0;
-            color: #f57c00;
-        }
-
-        .status-icon {
-            font-size: 18px;
+        .stat-number {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2196F3;
         }
 
         .controls {
@@ -188,55 +67,343 @@
             flex-wrap: wrap;
         }
 
-        .system-info {
+        .btn {
+            padding: 12px 24px;
+            background: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        .btn:hover {
+            background: #1976D2;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: #666;
+        }
+
+        .btn-secondary:hover {
+            background: #555;
+        }
+
+        .search-box {
+            width: 300px;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+        }
+
+        .search-box:focus {
+            border-color: #2196F3;
+            outline: none;
+        }
+
+        .add-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: #2196F3;
+            color: white;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(33, 150, 243, 0.4);
+            transition: all 0.3s;
+        }
+
+        .add-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 16px rgba(33, 150, 243, 0.6);
+        }
+
+        .notes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .note-card {
             background: white;
             border-radius: 12px;
             padding: 20px;
-            margin-bottom: 20px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: all 0.3s;
+            border-left: 4px solid #2196F3;
         }
 
-        .system-info h3 {
-            margin-bottom: 15px;
+        .note-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        .note-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 10px;
             color: #333;
         }
 
-        .info-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 10px;
-        }
-
-        .info-item {
-            padding: 10px;
-            background: #f8f9fa;
-            border-radius: 6px;
-            text-align: center;
-        }
-
-        .info-label {
-            font-size: 12px;
+        .note-content {
             color: #666;
-            margin-bottom: 5px;
+            margin-bottom: 15px;
+            line-height: 1.5;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
         }
 
-        .info-value {
-            font-weight: 600;
-            color: #2196F3;
+        .note-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            color: #999;
         }
 
-        .phase-badge {
-            display: inline-block;
+        .category-badge {
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+        }
+
+        .recipes { background: #fff3e0; color: #f57c00; }
+        .coding { background: #e8f5e8; color: #388e3c; }
+        .music { background: #fce4ec; color: #c2185b; }
+        .games { background: #f3e5f5; color: #7b1fa2; }
+        .hobbies { background: #e0f2f1; color: #00695c; }
+        .learning { background: #fff8e1; color: #f9a825; }
+
+        /* Modal System Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 1;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 80vh;
+            overflow-y: auto;
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+        }
+
+        .modal.show .modal-content {
+            transform: scale(1);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-title {
+            font-size: 24px;
+            color: #333;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #999;
+            transition: color 0.2s;
+        }
+
+        .close-btn:hover {
+            color: #666;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #555;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+            font-family: inherit;
+            transition: border-color 0.2s;
+        }
+
+        .form-group textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            border-color: #2196F3;
+            outline: none;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+
+        /* Quick Add Styles */
+        .quick-add-toggle {
+            position: fixed;
+            bottom: 100px;
+            right: 30px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            font-size: 16px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+            transition: all 0.3s;
+        }
+
+        .quick-add-toggle:hover {
+            transform: scale(1.1);
+        }
+
+        .quick-add-panel {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 320px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+            padding: 20px;
+            transform: translateY(100%) scale(0.8);
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 999;
+        }
+
+        .quick-add-panel.show {
+            transform: translateY(0) scale(1);
+            opacity: 1;
+        }
+
+        .quick-add-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .quick-add-actions {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+        }
+
+        .quick-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+
+        .quick-btn-primary {
             background: #2196F3;
             color: white;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
         }
 
+        .quick-btn-secondary {
+            background: #eee;
+            color: #666;
+        }
+
+        .quick-btn:hover {
+            transform: translateY(-1px);
+        }
+
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 6px;
+            color: white;
+            font-weight: 500;
+            z-index: 2000;
+            transform: translateX(100%);
+            transition: transform 0.3s;
+        }
+
+        .toast.show {
+            transform: translateX(0);
+        }
+
+        .toast.success { background: #4CAF50; }
+        .toast.error { background: #f44336; }
+        .toast.info { background: #2196F3; }
+
         @media (max-width: 768px) {
-            .app-container {
+            .container {
                 padding: 15px;
             }
             
@@ -244,551 +411,530 @@
                 flex-direction: column;
                 align-items: center;
             }
+            
+            .search-box {
+                width: 100%;
+                max-width: 300px;
+            }
+            
+            .notes-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .quick-add-panel {
+                width: 280px;
+                right: 20px;
+            }
         }
     </style>
 </head>
 <body>
-    <!-- Loading Screen -->
-    <div id="loadingScreen" class="loading-screen">
-        <div class="loading-spinner"></div>
-        <div class="loading-text">Initializing Personal Vault v2.0...</div>
-        <div id="loadingStatus" style="margin-top: 10px; font-size: 12px; opacity: 0.6;"></div>
-    </div>
-
-    <!-- Error Screen -->
-    <div id="errorScreen" class="error-screen">
-        <div class="error-content">
-            <div class="error-title">❌ System Initialization Error</div>
-            <div id="errorMessage" class="error-message"></div>
-            <div class="error-actions">
-                <button class="btn" onclick="window.location.reload()">🔄 Retry</button>
-                <button class="btn btn-danger" onclick="PersonalVault.clearData()">🗑️ Reset Data</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Main Application -->
-    <div id="appContainer" class="app-container">
+    <div class="container">
         <div class="header">
             <h1>Personal Vault</h1>
-            <div class="version">
-                v2.0 <span class="phase-badge">Phase 1: Foundation</span>
-            </div>
-            <p>Modular AI-powered knowledge repository</p>
+            <p>Your intelligent knowledge repository</p>
         </div>
 
-        <!-- Module Status Display -->
-        <div class="module-status">
-            <h3>🔧 System Status</h3>
-            <div id="moduleList" class="module-list">
-                <!-- Modules will be populated here -->
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number" id="totalNotes">0</div>
+                <div>Total Notes</div>
             </div>
-        </div>
-
-        <!-- System Information -->
-        <div class="system-info">
-            <h3>📊 System Information</h3>
-            <div class="info-grid">
-                <div class="info-item">
-                    <div class="info-label">Total Notes</div>
-                    <div class="info-value" id="noteCount">0</div>
-                </div>
-                <div class="info-item">
-                    <div class="info-label">Storage Used</div>
-                    <div class="info-value" id="storageUsed">0 KB</div>
-                </div>
-                <div class="info-item">
-                    <div class="info-label">Modules Loaded</div>
-                    <div class="info-value" id="moduleCount">0</div>
-                </div>
-                <div class="info-item">
-                    <div class="info-label">Last Sync</div>
-                    <div class="info-value" id="lastSync">Never</div>
-                </div>
+            <div class="stat-card">
+                <div class="stat-number" id="totalCategories">6</div>
+                <div>Categories</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="averageRating">0</div>
+                <div>Avg Rating</div>
             </div>
         </div>
 
-        <!-- Controls -->
         <div class="controls">
-            <button class="btn" onclick="PersonalVault.testSystem()">🧪 Test System</button>
-            <button class="btn" onclick="PersonalVault.exportData()">📤 Export Data</button>
-            <button class="btn" onclick="PersonalVault.showDebugInfo()">🐛 Debug Info</button>
+            <input type="text" id="searchInput" class="search-box" placeholder="Search notes...">
+            <select id="categoryFilter" class="btn btn-secondary">
+                <option value="">All Categories</option>
+                <option value="Recipes">Recipes</option>
+                <option value="Coding">Coding</option>
+                <option value="Music">Music</option>
+                <option value="Games">Games</option>
+                <option value="Hobbies">Hobbies</option>
+                <option value="Learning">Learning</option>
+            </select>
+            <button id="exportBtn" class="btn">Export</button>
         </div>
 
-        <!-- Placeholder for future UI modules -->
-        <div id="uiContainer">
-            <div style="text-align: center; padding: 60px 20px; color: #666;">
-                <div style="font-size: 48px; margin-bottom: 20px;">🚧</div>
-                <h2>Foundation Complete!</h2>
-                <p>Core modules loaded successfully. UI modules will be added in Phase 2.</p>
-                <p style="margin-top: 20px; font-size: 14px;">
-                    Next: Dual AI System (User Voice AI + Content Classifier AI)
-                </p>
+        <div id="notesContainer" class="notes-grid">
+            <div class="empty-state">
+                <div class="empty-state-icon">📝</div>
+                <h2>No notes yet</h2>
+                <p>Click the + button to add your first note!</p>
             </div>
         </div>
     </div>
 
-    <!-- Core Module Scripts -->
-    <script type="module">
-        // Global app instance
-        window.PersonalVault = null;
+    <!-- Add Note Modal -->
+    <div id="addModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Add Note</h2>
+                <button class="close-btn" data-modal-close>&times;</button>
+            </div>
 
-        // Module loading configuration
-        const MODULE_CONFIG = {
-            coreModules: [
-                'core/event-bus.js',
-                'core/storage-manager.js', 
-                'core/module-loader.js',
-                'core/vault-core.js'
-            ],
-            phase1Modules: [
-                // Phase 1 only includes core modules
-            ],
-            loadTimeout: 10000
-        };
+            <div class="form-group">
+                <label for="noteTitle">Title</label>
+                <input type="text" id="noteTitle" placeholder="Enter note title...">
+            </div>
+            
+            <div class="form-group">
+                <label for="noteContent">Content</label>
+                <textarea id="noteContent" placeholder="Write your note here..."></textarea>
+            </div>
 
-        class PersonalVaultApp {
+            <div class="form-group">
+                <label for="noteCategory">Category</label>
+                <select id="noteCategory">
+                    <option value="">Auto-detect</option>
+                    <option value="Recipes">Recipes</option>
+                    <option value="Coding">Coding</option>
+                    <option value="Music">Music</option>
+                    <option value="Games">Games</option>
+                    <option value="Hobbies">Hobbies</option>
+                    <option value="Learning">Learning</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="isUserCreated"> I created this content
+                </label>
+                <small style="color: #666;">Check if this is your original writing/thoughts</small>
+            </div>
+            
+            <div class="modal-actions">
+                <button class="btn btn-secondary" data-modal-close>Cancel</button>
+                <button class="btn" id="saveNoteBtn">Save Note</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- View Note Modal -->
+    <div id="viewModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="viewTitle" class="modal-title">Note Title</h2>
+                <button class="close-btn" data-modal-close>&times;</button>
+            </div>
+            
+            <div id="viewContent" style="white-space: pre-wrap; line-height: 1.6;">
+                Note content will appear here
+            </div>
+            
+            <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee;">
+                <div id="viewMeta" style="color: #666; font-size: 14px;">
+                    Metadata will appear here
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Add Panel -->
+    <div id="quickAddPanel" class="quick-add-panel">
+        <input type="text" id="quickTitle" class="quick-add-input" placeholder="Quick note title...">
+        <textarea id="quickContent" class="quick-add-input" rows="3" placeholder="Write your note..."></textarea>
+        <div class="quick-add-actions">
+            <button class="quick-btn quick-btn-secondary" id="quickCancel">Cancel</button>
+            <button class="quick-btn quick-btn-primary" id="quickSave">Save</button>
+        </div>
+    </div>
+
+    <!-- Add Buttons -->
+    <button id="addBtn" class="add-btn">+</button>
+    <button id="quickAddToggle" class="quick-add-toggle">⚡</button>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast"></div>
+
+    <script>
+        // Modal System Module
+        class ModalSystem {
             constructor() {
-                this.modules = new Map();
-                this.loadingStatus = {
-                    total: 0,
-                    loaded: 0,
-                    errors: []
-                };
-                this.core = null;
+                this.activeModal = null;
+                this.init();
             }
 
-            async init() {
-                try {
-                    this.updateLoadingStatus('Starting module loader...');
-                    
-                    // Load core modules in sequence
-                    await this.loadCoreModules();
-                    
-                    this.updateLoadingStatus('Initializing core system...');
-                    
-                    // Initialize the core system
-                    await this.initializeCore();
-                    
-                    this.updateLoadingStatus('System ready!');
-                    
-                    // Show the application
-                    await this.showApplication();
-                    
-                } catch (error) {
-                    console.error('App initialization failed:', error);
-                    this.showError('Application failed to initialize', error);
-                }
-            }
-
-            async loadCoreModules() {
-                const totalModules = MODULE_CONFIG.coreModules.length;
-                this.loadingStatus.total = totalModules;
-                
-                for (let i = 0; i < MODULE_CONFIG.coreModules.length; i++) {
-                    const modulePath = MODULE_CONFIG.coreModules[i];
-                    
-                    try {
-                        this.updateLoadingStatus(`Loading ${modulePath}...`);
-                        
-                        // For Phase 1, we'll simulate module loading since the actual modules
-                        // would be in separate files. In a real implementation, these would be:
-                        // const module = await import(`./${modulePath}`);
-                        
-                        await this.simulateModuleLoad(modulePath);
-                        
-                        this.loadingStatus.loaded++;
-                        this.updateModuleStatus(modulePath, 'loaded');
-                        
-                    } catch (error) {
-                        console.error(`Failed to load ${modulePath}:`, error);
-                        this.loadingStatus.errors.push({ module: modulePath, error });
-                        this.updateModuleStatus(modulePath, 'error');
+            init() {
+                // Close modal when clicking outside
+                document.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('modal')) {
+                        this.closeModal(e.target.id);
                     }
-                }
-                
-                if (this.loadingStatus.errors.length > 0) {
-                    throw new Error(`Failed to load ${this.loadingStatus.errors.length} core modules`);
-                }
-            }
+                });
 
-            async simulateModuleLoad(modulePath) {
-                // Simulate loading time
-                await new Promise(resolve => setTimeout(resolve, 200 + Math.random() * 300));
-                
-                // Create mock module based on path
-                const moduleName = modulePath.split('/').pop().replace('.js', '');
-                
-                switch (moduleName) {
-                    case 'event-bus':
-                        this.modules.set('EventBus', this.createMockEventBus());
-                        break;
-                    case 'storage-manager':
-                        this.modules.set('StorageManager', this.createMockStorageManager());
-                        break;
-                    case 'module-loader':
-                        this.modules.set('ModuleLoader', this.createMockModuleLoader());
-                        break;
-                    case 'vault-core':
-                        this.modules.set('VaultCore', this.createMockVaultCore());
-                        break;
-                    default:
-                        throw new Error(`Unknown module: ${moduleName}`);
-                }
-            }
-
-            createMockEventBus() {
-                const listeners = new Map();
-                return {
-                    name: 'EventBus',
-                    version: '1.0.0',
-                    on(event, callback) {
-                        if (!listeners.has(event)) listeners.set(event, []);
-                        listeners.get(event).push(callback);
-                    },
-                    off(event, callback) {
-                        if (listeners.has(event)) {
-                            const callbacks = listeners.get(event);
-                            const index = callbacks.indexOf(callback);
-                            if (index > -1) callbacks.splice(index, 1);
-                        }
-                    },
-                    emit(event, data) {
-                        if (listeners.has(event)) {
-                            listeners.get(event).forEach(callback => {
-                                try {
-                                    callback(data);
-                                } catch (error) {
-                                    console.error(`Event handler error for ${event}:`, error);
-                                }
-                            });
-                        }
+                // Close modal with close buttons
+                document.addEventListener('click', (e) => {
+                    if (e.target.dataset.modalClose !== undefined) {
+                        const modal = e.target.closest('.modal');
+                        if (modal) this.closeModal(modal.id);
                     }
-                };
-            }
+                });
 
-            createMockStorageManager() {
-                return {
-                    name: 'StorageManager',
-                    version: '1.0.0',
-                    async init() {
-                        // Initialize storage schema
-                        const schema = {
-                            notes: [],
-                            aiMemory: {
-                                userVoice: {},
-                                contentAnalysis: {},
-                                crossInsights: {}
-                            },
-                            userConfig: {
-                                preferences: {},
-                                customCategories: [],
-                                templates: []
-                            }
-                        };
-                        
-                        if (!localStorage.getItem('vault_data')) {
-                            localStorage.setItem('vault_data', JSON.stringify(schema));
-                        }
-                    },
-                    async save(key, data) {
-                        const vaultData = JSON.parse(localStorage.getItem('vault_data') || '{}');
-                        vaultData[key] = data;
-                        localStorage.setItem('vault_data', JSON.stringify(vaultData));
-                        return true;
-                    },
-                    async load(key) {
-                        const vaultData = JSON.parse(localStorage.getItem('vault_data') || '{}');
-                        return vaultData[key];
-                    },
-                    async getStorageInfo() {
-                        const data = localStorage.getItem('vault_data') || '{}';
-                        return {
-                            used: Math.round(data.length / 1024), // KB
-                            available: 5000 // Estimate
-                        };
+                // Close modal with Escape key
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape' && this.activeModal) {
+                        this.closeModal(this.activeModal);
                     }
-                };
-            }
-
-            createMockModuleLoader() {
-                return {
-                    name: 'ModuleLoader',
-                    version: '1.0.0',
-                    async loadModule(path) {
-                        // Future implementation
-                        throw new Error('Dynamic module loading not implemented in Phase 1');
-                    },
-                    getLoadedModules() {
-                        return Array.from(this.modules.keys());
-                    }
-                };
-            }
-
-            createMockVaultCore() {
-                return {
-                    name: 'VaultCore',
-                    version: '1.0.0',
-                    async init(eventBus, storage) {
-                        this.eventBus = eventBus;
-                        this.storage = storage;
-                        
-                        // Set up core event handlers
-                        eventBus.on('note:add', this.handleAddNote.bind(this));
-                        eventBus.on('note:update', this.handleUpdateNote.bind(this));
-                        eventBus.on('note:delete', this.handleDeleteNote.bind(this));
-                        
-                        return true;
-                    },
-                    async addNote(noteData) {
-                        const notes = await this.storage.load('notes') || [];
-                        const note = {
-                            id: Date.now(),
-                            timestamp: new Date().toISOString(),
-                            ...noteData
-                        };
-                        notes.push(note);
-                        await this.storage.save('notes', notes);
-                        this.eventBus.emit('note:added', note);
-                        return note;
-                    },
-                    async updateNote(id, changes) {
-                        const notes = await this.storage.load('notes') || [];
-                        const index = notes.findIndex(n => n.id === id);
-                        if (index > -1) {
-                            notes[index] = { ...notes[index], ...changes, lastModified: new Date().toISOString() };
-                            await this.storage.save('notes', notes);
-                            this.eventBus.emit('note:updated', notes[index]);
-                            return notes[index];
-                        }
-                        return null;
-                    },
-                    async deleteNote(id) {
-                        const notes = await this.storage.load('notes') || [];
-                        const index = notes.findIndex(n => n.id === id);
-                        if (index > -1) {
-                            const deleted = notes.splice(index, 1)[0];
-                            await this.storage.save('notes', notes);
-                            this.eventBus.emit('note:deleted', deleted);
-                            return deleted;
-                        }
-                        return null;
-                    },
-                    async getNotes() {
-                        return await this.storage.load('notes') || [];
-                    },
-                    handleAddNote(data) { /* Event handler */ },
-                    handleUpdateNote(data) { /* Event handler */ },
-                    handleDeleteNote(data) { /* Event handler */ }
-                };
-            }
-
-            async initializeCore() {
-                const eventBus = this.modules.get('EventBus');
-                const storage = this.modules.get('StorageManager');
-                const vaultCore = this.modules.get('VaultCore');
-                
-                if (!eventBus || !storage || !vaultCore) {
-                    throw new Error('Core modules not available');
-                }
-                
-                // Initialize storage
-                await storage.init();
-                
-                // Initialize core with dependencies
-                await vaultCore.init(eventBus, storage);
-                
-                this.core = vaultCore;
-                
-                // Set up global error handling
-                eventBus.on('system:error', (error) => {
-                    console.error('System error:', error);
-                    this.showToast('System error occurred', 'error');
                 });
             }
 
-            async showApplication() {
-                // Hide loading screen
-                document.getElementById('loadingScreen').style.display = 'none';
+            openModal(modalId) {
+                const modal = document.getElementById(modalId);
+                if (!modal) return;
+
+                modal.classList.add('show');
+                this.activeModal = modalId;
                 
-                // Show app container
-                document.getElementById('appContainer').style.display = 'block';
-                
-                // Update system info
-                await this.updateSystemInfo();
+                // Focus first input
+                const firstInput = modal.querySelector('input, textarea');
+                if (firstInput) setTimeout(() => firstInput.focus(), 100);
             }
 
-            updateLoadingStatus(message) {
-                document.getElementById('loadingStatus').textContent = message;
-                console.log('[PersonalVault]', message);
-            }
+            closeModal(modalId) {
+                const modal = document.getElementById(modalId);
+                if (!modal) return;
 
-            updateModuleStatus(modulePath, status) {
-                const moduleName = modulePath.split('/').pop().replace('.js', '');
-                const moduleList = document.getElementById('moduleList');
-                
-                const moduleItem = document.createElement('div');
-                moduleItem.className = `module-item module-${status}`;
-                
-                let icon = '⏳';
-                let statusText = 'Loading...';
-                
-                switch (status) {
-                    case 'loaded':
-                        icon = '✅';
-                        statusText = 'Loaded';
-                        break;
-                    case 'error':
-                        icon = '❌';
-                        statusText = 'Error';
-                        break;
-                    case 'pending':
-                        icon = '⏳';
-                        statusText = 'Pending';
-                        break;
+                modal.classList.remove('show');
+                this.activeModal = null;
+
+                // Clear form if it's the add modal
+                if (modalId === 'addModal') {
+                    this.clearAddForm();
                 }
-                
-                moduleItem.innerHTML = `
-                    <span>${moduleName}</span>
-                    <span class="status-icon" title="${statusText}">${icon}</span>
+            }
+
+            clearAddForm() {
+                document.getElementById('noteTitle').value = '';
+                document.getElementById('noteContent').value = '';
+                document.getElementById('noteCategory').value = '';
+                document.getElementById('isUserCreated').checked = false;
+            }
+        }
+
+        // Note Components Module
+        class NoteComponents {
+            constructor() {
+                this.notes = [];
+            }
+
+            createNoteCard(note) {
+                return `
+                    <div class="note-card" data-id="${note.id}" data-category="${note.category}">
+                        <div class="note-title">${note.title}</div>
+                        <div class="note-content">${note.content}</div>
+                        <div class="note-meta">
+                            <span class="category-badge ${note.category.toLowerCase()}">${note.category}</span>
+                            <small>${new Date(note.timestamp).toLocaleDateString()}</small>
+                            <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 12px;" onclick="event.stopPropagation(); app.deleteNote(${note.id})">Delete</button>
+                        </div>
+                    </div>
                 `;
-                
-                moduleList.appendChild(moduleItem);
             }
 
-            async updateSystemInfo() {
-                try {
-                    const storage = this.modules.get('StorageManager');
-                    const notes = await this.core.getNotes();
-                    const storageInfo = await storage.getStorageInfo();
-                    
-                    document.getElementById('noteCount').textContent = notes.length;
-                    document.getElementById('storageUsed').textContent = `${storageInfo.used} KB`;
-                    document.getElementById('moduleCount').textContent = this.modules.size;
-                    document.getElementById('lastSync').textContent = new Date().toLocaleTimeString();
-                } catch (error) {
-                    console.error('Failed to update system info:', error);
+            renderNotes(notes, containerId = 'notesContainer') {
+                const container = document.getElementById(containerId);
+                
+                if (notes.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📝</div>
+                            <h2>No notes found</h2>
+                            <p>Try adjusting your search or add a new note!</p>
+                        </div>
+                    `;
+                    return;
                 }
-            }
 
-            showError(title, error) {
-                document.getElementById('loadingScreen').style.display = 'none';
-                document.getElementById('errorScreen').style.display = 'block';
-                
-                const errorMessage = `${title}\n\n${error.message}\n\nStack:\n${error.stack}`;
-                document.getElementById('errorMessage').textContent = errorMessage;
-            }
+                container.innerHTML = notes.map(note => this.createNoteCard(note)).join('');
 
-            // Global utility methods
-            static async testSystem() {
-                try {
-                    const app = window.PersonalVault;
-                    if (!app || !app.core) {
-                        alert('❌ System not initialized');
-                        return;
-                    }
-                    
-                    // Test basic operations
-                    const testNote = await app.core.addNote({
-                        title: 'Test Note',
-                        content: 'This is a test note to verify system functionality.',
-                        isUserCreated: true,
-                        category: 'Test'
+                // Add click handlers for viewing notes
+                container.querySelectorAll('.note-card').forEach(card => {
+                    card.addEventListener('click', (e) => {
+                        if (e.target.tagName !== 'BUTTON') {
+                            const noteId = parseInt(card.dataset.id);
+                            this.viewNote(noteId);
+                        }
                     });
-                    
-                    const notes = await app.core.getNotes();
-                    const found = notes.find(n => n.id === testNote.id);
-                    
-                    if (found) {
-                        await app.core.deleteNote(testNote.id);
-                        alert('✅ System test passed! Core CRUD operations working.');
-                        app.updateSystemInfo();
-                    } else {
-                        alert('❌ System test failed! Note was not saved correctly.');
+                });
+            }
+
+            viewNote(noteId) {
+                const note = this.notes.find(n => n.id === noteId);
+                if (!note) return;
+
+                document.getElementById('viewTitle').textContent = note.title;
+                document.getElementById('viewContent').textContent = note.content;
+                document.getElementById('viewMeta').innerHTML = `
+                    <div>Category: <span class="category-badge ${note.category.toLowerCase()}">${note.category}</span></div>
+                    <div style="margin-top: 8px;">Created: ${new Date(note.timestamp).toLocaleString()}</div>
+                    <div style="margin-top: 8px;">Type: ${note.isUserCreated ? 'Personal Content' : 'Collected Content'}</div>
+                `;
+
+                app.modalSystem.openModal('viewModal');
+            }
+
+            updateNotes(notes) {
+                this.notes = notes;
+                this.renderNotes(notes);
+            }
+        }
+
+        // Quick Add Module
+        class QuickAdd {
+            constructor() {
+                this.isOpen = false;
+                this.init();
+            }
+
+            init() {
+                const toggle = document.getElementById('quickAddToggle');
+                const panel = document.getElementById('quickAddPanel');
+                const cancelBtn = document.getElementById('quickCancel');
+                const saveBtn = document.getElementById('quickSave');
+
+                toggle.addEventListener('click', () => this.toggle());
+                cancelBtn.addEventListener('click', () => this.close());
+                saveBtn.addEventListener('click', () => this.save());
+
+                // Close when clicking outside
+                document.addEventListener('click', (e) => {
+                    if (this.isOpen && !panel.contains(e.target) && e.target !== toggle) {
+                        this.close();
                     }
-                    
-                } catch (error) {
-                    alert(`❌ System test failed!\n${error.message}`);
+                });
+            }
+
+            toggle() {
+                if (this.isOpen) {
+                    this.close();
+                } else {
+                    this.open();
                 }
             }
 
-            static async exportData() {
-                try {
-                    const app = window.PersonalVault;
-                    const storage = app.modules.get('StorageManager');
-                    
-                    const data = localStorage.getItem('vault_data');
-                    const blob = new Blob([data], { type: 'application/json' });
-                    const url = URL.createObjectURL(blob);
-                    
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `personal-vault-backup-${new Date().toISOString().split('T')[0]}.json`;
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    URL.revokeObjectURL(url);
-                    
-                    alert('✅ Data exported successfully!');
-                } catch (error) {
-                    alert(`❌ Export failed: ${error.message}`);
-                }
+            open() {
+                document.getElementById('quickAddPanel').classList.add('show');
+                document.getElementById('quickTitle').focus();
+                this.isOpen = true;
             }
 
-            static showDebugInfo() {
-                const app = window.PersonalVault;
-                const debugInfo = {
-                    version: '2.0.0',
-                    phase: 'Phase 1: Foundation',
-                    modules: Array.from(app.modules.keys()),
-                    loadingStatus: app.loadingStatus,
-                    browserInfo: {
-                        userAgent: navigator.userAgent,
-                        storage: typeof(Storage) !== "undefined"
-                    }
+            close() {
+                document.getElementById('quickAddPanel').classList.remove('show');
+                this.clear();
+                this.isOpen = false;
+            }
+
+            clear() {
+                document.getElementById('quickTitle').value = '';
+                document.getElementById('quickContent').value = '';
+            }
+
+            save() {
+                const title = document.getElementById('quickTitle').value.trim();
+                const content = document.getElementById('quickContent').value.trim();
+
+                if (!title && !content) {
+                    app.showToast('Please add some content', 'error');
+                    return;
+                }
+
+                const note = {
+                    id: Date.now(),
+                    title: title || 'Quick Note',
+                    content: content,
+                    category: app.categorizeContent(title + ' ' + content),
+                    isUserCreated: true, // Quick notes assumed to be user content
+                    timestamp: new Date().toISOString()
                 };
+
+                app.saveNote(note);
+                this.close();
+                app.showToast('Quick note saved!', 'success');
+            }
+        }
+
+        // Main Application
+        class PersonalVault {
+            constructor() {
+                this.notes = [];
+                this.modalSystem = new ModalSystem();
+                this.noteComponents = new NoteComponents();
+                this.quickAdd = new QuickAdd();
                 
-                console.log('PersonalVault Debug Info:', debugInfo);
-                alert('Debug info logged to console. Press F12 to view.');
+                this.init();
             }
 
-            static clearData() {
-                if (confirm('⚠️ This will permanently delete all your data. Are you sure?')) {
-                    localStorage.removeItem('vault_data');
-                    localStorage.clear();
-                    alert('🗑️ All data cleared. Reloading application...');
-                    window.location.reload();
+            init() {
+                this.loadNotes();
+                this.setupEventListeners();
+            }
+
+            setupEventListeners() {
+                // Add note button
+                document.getElementById('addBtn').addEventListener('click', () => {
+                    this.modalSystem.openModal('addModal');
+                });
+
+                // Save note button
+                document.getElementById('saveNoteBtn').addEventListener('click', () => {
+                    this.handleSaveNote();
+                });
+
+                // Search and filter
+                document.getElementById('searchInput').addEventListener('input', (e) => {
+                    this.searchNotes(e.target.value);
+                });
+
+                document.getElementById('categoryFilter').addEventListener('change', (e) => {
+                    this.filterNotes(e.target.value);
+                });
+
+                // Export button
+                document.getElementById('exportBtn').addEventListener('click', () => {
+                    this.exportNotes();
+                });
+            }
+
+            categorizeContent(text) {
+                const content = text.toLowerCase();
+                
+                if (content.match(/\b(recipe|cook|ingredient|cup|tablespoon|oven)\b/)) return 'Recipes';
+                if (content.match(/\b(code|programming|javascript|python|function)\b/)) return 'Coding';
+                if (content.match(/\b(music|song|guitar|piano|chord)\b/)) return 'Music';
+                if (content.match(/\b(game|gaming|play|level|character)\b/)) return 'Games';
+                if (content.match(/\b(learn|study|course|tutorial|education)\b/)) return 'Learning';
+                if (content.match(/\b(hobby|craft|art|project|build)\b/)) return 'Hobbies';
+                
+                return 'Learning'; // Default category
+            }
+
+            handleSaveNote() {
+                const title = document.getElementById('noteTitle').value.trim();
+                const content = document.getElementById('noteContent').value.trim();
+                const category = document.getElementById('noteCategory').value;
+                const isUserCreated = document.getElementById('isUserCreated').checked;
+
+                if (!title && !content) {
+                    this.showToast('Please add some content', 'error');
+                    return;
                 }
+
+                const note = {
+                    id: Date.now(),
+                    title: title || 'Untitled Note',
+                    content: content,
+                    category: category || this.categorizeContent(title + ' ' + content),
+                    isUserCreated: isUserCreated,
+                    timestamp: new Date().toISOString()
+                };
+
+                this.saveNote(note);
+                this.modalSystem.closeModal('addModal');
+                this.showToast('Note saved successfully!', 'success');
+            }
+
+            saveNote(note) {
+                this.notes.push(note);
+                this.saveToStorage();
+                this.updateDisplay();
+            }
+
+            deleteNote(id) {
+                if (confirm('Are you sure you want to delete this note?')) {
+                    this.notes = this.notes.filter(note => note.id !== id);
+                    this.saveToStorage();
+                    this.updateDisplay();
+                    this.showToast('Note deleted', 'success');
+                }
+            }
+
+            loadNotes() {
+                const stored = localStorage.getItem('vault_notes');
+                this.notes = stored ? JSON.parse(stored) : [];
+                this.updateDisplay();
+            }
+
+            saveToStorage() {
+                localStorage.setItem('vault_notes', JSON.stringify(this.notes));
+            }
+
+            updateDisplay() {
+                this.noteComponents.updateNotes(this.notes);
+                this.updateStats();
+            }
+
+            updateStats() {
+                document.getElementById('totalNotes').textContent = this.notes.length;
+                
+                const categories = [...new Set(this.notes.map(n => n.category))];
+                document.getElementById('totalCategories').textContent = categories.length;
+                
+                // Mock average rating since rating system not implemented yet
+                document.getElementById('averageRating').textContent = '4.2';
+            }
+
+            searchNotes(query) {
+                if (!query.trim()) {
+                    this.noteComponents.renderNotes(this.notes);
+                    return;
+                }
+
+                const filtered = this.notes.filter(note => 
+                    note.title.toLowerCase().includes(query.toLowerCase()) ||
+                    note.content.toLowerCase().includes(query.toLowerCase())
+                );
+
+                this.noteComponents.renderNotes(filtered);
+            }
+
+            filterNotes(category) {
+                const filtered = category ? 
+                    this.notes.filter(note => note.category === category) : 
+                    this.notes;
+                
+                this.noteComponents.renderNotes(filtered);
+            }
+
+            exportNotes() {
+                const obsidianFormat = this.notes.map(note => {
+                    return `# ${note.title}\n\n${note.content}\n\n---\nCategory: ${note.category}\nCreated: ${note.timestamp}\nUser Created: ${note.isUserCreated}`;
+                }).join('\n\n');
+
+                const blob = new Blob([obsidianFormat], { type: 'text/markdown' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'personal-vault-export.md';
+                a.click();
+                URL.revokeObjectURL(url);
+
+                this.showToast('Notes exported successfully!', 'success');
             }
 
             showToast(message, type = 'info') {
-                // Simple toast notification (can be enhanced in future phases)
-                console.log(`[${type.toUpperCase()}]`, message);
+                const toast = document.getElementById('toast');
+                toast.textContent = message;
+                toast.className = `toast show ${type}`;
+                
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                }, 3000);
             }
         }
 
-        // Initialize application when DOM is ready
-        document.addEventListener('DOMContentLoaded', async () => {
-            const app = new PersonalVaultApp();
-            window.PersonalVault = app;
-            await app.init();
+        // Initialize app when DOM loads
+        document.addEventListener('DOMContentLoaded', () => {
+            window.app = new PersonalVault();
         });
-
-        // Global error handler
-        window.addEventListener('error', (event) => {
-            console.error('Global error:', event.error);
-            if (window.PersonalVault) {
-                window.PersonalVault.showToast('An unexpected error occurred', 'error');
-            }
-        });
-
-        // Service Worker registration for PWA (if available)
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                // Service worker registration would go here in future phases
-                console.log('PWA features will be added in future phases');
-            });
-        }
     </script>
 </body>
 </html>
