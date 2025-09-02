@@ -118,11 +118,40 @@
             cursor: pointer;
             box-shadow: 0 4px 12px rgba(33, 150, 243, 0.4);
             transition: all 0.3s;
+            z-index: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .add-btn:hover {
             transform: scale(1.1);
             box-shadow: 0 6px 16px rgba(33, 150, 243, 0.6);
+        }
+
+        .quick-add-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 100px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: #FF9800;
+            color: white;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            box-shadow: 0 3px 10px rgba(255, 152, 0, 0.4);
+            transition: all 0.3s;
+            z-index: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .quick-add-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 5px 14px rgba(255, 152, 0, 0.6);
         }
 
         .notes-grid {
@@ -501,6 +530,31 @@
         </div>
     </div>
 
+    <!-- Quick Add Modal -->
+    <div id="quickAddModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">⚡ Quick Add</h2>
+                <button id="closeQuickModal" class="close-btn">&times;</button>
+            </div>
+            
+            <div class="form-group">
+                <label for="quickTitle">Title</label>
+                <input type="text" id="quickTitle" placeholder="Enter note title...">
+            </div>
+            
+            <div class="form-group">
+                <label for="quickContent">Content</label>
+                <textarea id="quickContent" placeholder="Write your note here..."></textarea>
+            </div>
+            
+            <div class="modal-actions">
+                <button id="quickCancelBtn" class="btn btn-secondary">Cancel</button>
+                <button id="quickSaveBtn" class="btn">Save Note</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Add Note Modal -->
     <div id="addModal" class="modal">
         <div class="modal-content">
@@ -598,7 +652,8 @@
         </div>
     </div>
 
-    <!-- Add Button -->
+    <!-- Add Buttons -->
+    <button id="quickAddBtn" class="quick-add-btn">⚡</button>
     <button id="addBtn" class="add-btn">+</button>
 
     <!-- Toast Notification -->
@@ -758,11 +813,15 @@
 
             setupEventListeners() {
                 document.getElementById('addBtn').addEventListener('click', () => this.openAddModal());
+                document.getElementById('quickAddBtn').addEventListener('click', () => this.openQuickAddModal());
                 document.getElementById('closeModal').addEventListener('click', () => this.closeAddModal());
+                document.getElementById('closeQuickModal').addEventListener('click', () => this.closeQuickAddModal());
                 document.getElementById('closeViewModal').addEventListener('click', () => this.closeViewModal());
                 document.getElementById('closeAIStatsModal').addEventListener('click', () => this.closeAIStatsModal());
                 document.getElementById('saveBtn').addEventListener('click', () => this.saveNote());
+                document.getElementById('quickSaveBtn').addEventListener('click', () => this.saveQuickNote());
                 document.getElementById('cancelBtn').addEventListener('click', () => this.closeAddModal());
+                document.getElementById('quickCancelBtn').addEventListener('click', () => this.closeQuickAddModal());
                 document.getElementById('aiStatsBtn').addEventListener('click', () => this.showAIStats());
                 
                 document.getElementById('voiceBtn').addEventListener('click', () => this.toggleVoiceRecording());
@@ -776,6 +835,9 @@
                 // Modal click outside to close
                 document.getElementById('addModal').addEventListener('click', (e) => {
                     if (e.target.id === 'addModal') this.closeAddModal();
+                });
+                document.getElementById('quickAddModal').addEventListener('click', (e) => {
+                    if (e.target.id === 'quickAddModal') this.closeQuickAddModal();
                 });
                 document.getElementById('viewModal').addEventListener('click', (e) => {
                     if (e.target.id === 'viewModal') this.closeViewModal();
@@ -799,6 +861,17 @@
                 document.getElementById('isUserContent').checked = false;
                 document.getElementById('aiAnalysis').style.display = 'none';
                 this.currentAnalysis = null;
+            }
+
+            openQuickAddModal() {
+                document.getElementById('quickAddModal').classList.add('show');
+                document.getElementById('quickTitle').value = '';
+                document.getElementById('quickContent').value = '';
+                document.getElementById('quickTitle').focus();
+            }
+
+            closeQuickAddModal() {
+                document.getElementById('quickAddModal').classList.remove('show');
             }
 
             closeAddModal() {
